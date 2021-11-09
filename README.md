@@ -1,1 +1,2 @@
-#Readme and in-code documentation will be coming soon
+# HeCalc
+Readme and in-code documentation will be coming soon
