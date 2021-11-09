@@ -24,7 +24,7 @@ Created on Thu Nov  4 11:03:45 2021
 from scipy.stats import skewnorm as sk
 from scipy.optimize import curve_fit
 import numpy as np
-from date_calculation import get_date
+from .date_calculation import get_date
 
 def make_histogram(mc, parameterize):
     # Generate histogram with bins centered

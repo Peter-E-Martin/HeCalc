@@ -23,10 +23,15 @@ Created on Sun Sep 26 08:42:43 2021
 
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
-from base_GUI import Ui_MainWindow
+from .base_GUI import Ui_MainWindow
 from os import path
 import sys
-from main import WorkerClass
+import time
+import re
+import numpy as np
+from ..main import _get_cols, _load_file, _sample_loop, _make_excel
+from xlrd import XLRDError
+from tabulate import tabulate
 
 class GUI_App(Ui_MainWindow, QObject):
 
@@ -41,7 +46,7 @@ class GUI_App(Ui_MainWindow, QObject):
         self.saveAs = None
         self.sheet_name = None
         self.tabWidget.setCurrentIndex(0)
-        self.actionExit.triggered.connect(app.quit)
+        self.actionExit.triggered.connect(QtWidgets.QApplication.quit)#app.quit())
         self.actionHelp.triggered.connect(lambda: self.helpButton())
         self.actionAbout.triggered.connect(lambda: self.aboutButton())
         self.inputFileButton.clicked.connect(lambda: self.openFileNamesDialog())
@@ -341,7 +346,246 @@ class GUI_App(Ui_MainWindow, QObject):
             self.worker.loop_done.connect(self.loopDone)
             self.worker.loop_done.connect(self.worker_thread.quit)
             self.worker_thread.start()
+
+class WorkerClass(QObject):
+    
+    status = pyqtSignal(str)
+    text = pyqtSignal(str)
+    progress = pyqtSignal(float)
+    finished = pyqtSignal()
+    error = pyqtSignal()
+    stop = pyqtSignal()
+    loop_done = pyqtSignal()
+    sheet_entry = pyqtSignal()
+
+    def __init__(self,
+                 file,
+                 saveAs,
+                 prec,
+                 decimals,
+                 histograms,
+                 parameterize,
+                 monteCarlo,
+                 linear,
+                 measured_U235,
+                 manual_input,
+                 manual_data,
+                 sheet_name):
+        super(WorkerClass, self).__init__()
+        self.file = file
+        self.saveAs = saveAs
+        self.prec = prec
+        self.decimals = decimals
+        self.histograms = histograms
+        self.parameterize = parameterize
+        self.monteCarlo = monteCarlo
+        self.linear = linear
+        self.measured_U235 = measured_U235
+        self.manual_input = manual_input
+        self.manual_data = manual_data
+        self.cancel = False
+        self.sheet_name = sheet_name
+
+    def mainLoop(self):
+        save_columns = _get_cols(self.linear, self.monteCarlo, self.parameterize)
+        save_out = {c: [] for c in save_columns}
+        precision_user = self.prec*100
+
+        if not self.manual_input:
+            if self.histograms:
+                save_out['raw histogram'] = []
+                save_out['corrected histogram'] = []
+            total_time = time.time()
             
+            # Load data
+            data = _load_file(self.file, self.measured_U235, self.sheet_name)
+            if self.sheet_name is not None:
+                self.status.emit('Sheet not found. Please try again.')
+            if data is None:
+                self.sheet_entry.emit()
+                return
+            
+            try:  
+                # This is the main loop that calculates progress and calls the data reduction code
+                times = []
+                for i in range(len(data)):
+                    while not self.cancel:
+                        # Update user of new sample being analyzed
+                        self.progress.emit(100 * (len(save_out["Sample"])/len(data)))
+                        self.status.emit('Now working on sample ' + str(data['Sample'].iloc[i]))
+    
+                        # Estimate time remaining and alert user
+                        if len(times) == 0:
+                            self.text.emit(
+                                f'{len(save_out["Sample"])} of {len(data)} ' +
+                                'samples analyzed\nEstimating time remaining')
+                        elif round((len(data)-i)*np.mean(times)/60, 1) > 60:
+                            t_left = round((len(data)-i)*np.mean(times)/3600, 1)
+                            self.text.emit(
+                                f'{len(save_out["Sample"])} of {len(data)} ' +
+                                f'samples analyzed\nEst. {t_left} hr remaining')
+                        else:
+                            t_left = round((len(data)-i)*np.mean(times)/60, 1)
+                            self.text.emit(
+                                f'{len(save_out["Sample"])} of {len(data)} ' +
+                                f'samples analyzed\nEst. {t_left} min remaining')
+    
+                        # Check that no illegal characters are being used and replace with underscores
+                        if (re.sub('[^\w\-_]', '_', data['Sample'].iloc[i]) != 
+                                data['Sample'].iloc[i]):
+                            self.status.emit('sample name ' +
+                                             str(data['Sample'].iloc[i]) +
+                                             ' changed to ' +
+                                             str(re.sub('[^\w\-_]', '_', data['Sample'].iloc[i])) +
+                                             ' to avoid illegal characters in file name')
+                            data['Sample'].iloc[i] = re.sub('[^\w\-_]', '_', data['Sample'].iloc[i])
+                        save_out['Sample'].append(data['Sample'].iloc[i])
+                        
+                        sample_data = data.loc[[i]].to_dict(orient='record')[0]
+                        save_out = _sample_loop(save_out,
+                                                sample_data,
+                                                self.measured_U235,
+                                                self.linear,
+                                                self.monteCarlo,
+                                                self.histograms,
+                                                self.parameterize,
+                                                self.decimals,
+                                                self.prec)
+                        break
+    
+                book = _make_excel(save_out, save_columns, self.file,
+                                   self.monteCarlo, precision_user, self.saveAs)
+    
+                # When user cancels, alert user to cancelled status and kill the worker thread
+                if self.cancel:
+                    self.progress.emit(0.)
+                    self.text.emit('Data reduction canceled.\nNo data saved.')
+                    self.status.emit('Data reduction canceled\n')
+                    self.loop_done.emit()
+    
+                # Save the excel workbook, update user, and kill the worker thread
+                if self.cancel is False:
+                    try:
+                        book.save(self.saveAs)
+                        self.progress.emit(100.)
+                        self.text.emit(f'{len(data)} samples analyzed.')
+                        self.status.emit('Done! Total time to run: ' +
+                                         str(round((time.time()-total_time)/60, 2)) +
+                                         ' minutes\n')
+                        self.finished.emit()
+    
+                    # If the user has a workbook with the same name open, alert and kill thread
+                    except PermissionError:
+                        self.progress.emit(100.)
+                        self.text.emit(f'{len(data)} samples analyzed.')
+                        self.status.emit('\nCould not overwrite existing file.'+
+                                         '\nPlease close the open file and rerun.')
+                        self.stop.emit()
+                        self.error.emit()
+    
+            # If the excel sheet is formatted incorrectly, alert user and kill thread
+            except (XLRDError, KeyError):
+                self.status.emit('Please use correctly formatted data input.' +
+                                  '\nSee the help tab or documentation for more detail')
+                self.stop.emit()
+                self.error.emit()
+                
+        if self.manual_input:
+            self.histograms = False
+            self.parameterize = False
+            try:
+                if self.measured_U235:
+                    inputs = ['','4He', '238U', '235U', '232Th', '147Sm', '238Ft', '235Ft', '232Ft', '147Ft']
+                    vals = ['value']+self.manual_data[::2]
+                    uncs = [u'\u00B1']+self.manual_data[1::2]
+                    table = [inputs,vals,uncs]
+                    rotated = list(zip(*table))
+                    self.status.emit(tabulate(rotated, tablefmt = 'presto', headers="firstrow"))
+                else:
+                    inputs = ['','4He', 'U', '232Th', '147Sm', '238Ft', '235Ft', '232Ft', '147Ft']
+                    vals = ['value']+[self.manual_data[0]]+[self.manual_data[2]]+self.manual_data[6::2]
+                    uncs = [u'\u00B1']+[self.manual_data[1]]+[self.manual_data[3]]+self.manual_data[7::2]
+                    table = [inputs,vals,uncs]
+                    rotated = list(zip(*table))
+                    self.status.emit(tabulate(rotated, tablefmt = 'presto', headers="firstrow"))
+                
+                data = {'Sample': 'Manually Entered',
+                        '238U': self.manual_data[2],
+                        u'\u00B1 '+'238U': self.manual_data[3],
+                        '235U': self.manual_data[4],
+                        u'\u00B1 '+'235U': self.manual_data[5],
+                        '232Th': self.manual_data[6],
+                        u'\u00B1 '+'232Th': self.manual_data[7],
+                        '147Sm': self.manual_data[8],
+                        u'\u00B1 '+'147Sm': self.manual_data[9],
+                        '4He': self.manual_data[0],
+                        u'\u00B1 '+'4He': self.manual_data[1],
+                        '238Ft': self.manual_data[10],
+                        u'\u00B1 '+'238Ft': self.manual_data[11],
+                        '235Ft': self.manual_data[12],
+                        u'\u00B1 '+'235Ft': self.manual_data[13],
+                        '232Ft': self.manual_data[14],
+                        u'\u00B1 '+'232Ft': self.manual_data[15],
+                        '147Ft': self.manual_data[16],
+                        u'\u00B1 '+'147Ft': self.manual_data[17]}
+                output_lists = _sample_loop(save_out,
+                                            data,
+                                            self.measured_U235,
+                                            self.linear,
+                                            self.monteCarlo,
+                                            self.histograms,
+                                            self.parameterize,
+                                            self.decimals,
+                                            self.prec)
+                output = {}
+                for d in output_lists:
+                    if len(output_lists[d])>0:
+                        output[d] = output_lists[d][0]
+                key_change = ['Raw date', 'Raw\ndate',
+                              'Mean raw date', 'Mean\nraw\ndate',
+                              'Linear raw uncertainty', 'Linear\nraw\n'+u'\u00B1',
+                              ' +68% CI raw', '+68%\nCI\nraw',
+                              ' -68% CI raw', '-68%\nCI\nraw',
+                              '% Skewness of raw distribution', '% raw\nskew',
+                              'Corrected date', 'Corr.\ndate',
+                              'Mean corrected date', 'Mean\ncorrected\ndate',
+                              'Linear corrected uncertainty', 'Linear\ncorr.\n'+u'\u00B1',
+                              ' +68% CI corrected', '+68%\nCI\ncorr.',
+                              ' -68% CI corrected', '-68%\nCI\ncorr.',
+                              '% Skewness of corrected distribution', '% corr.\nskew']
+                for i in range(0,len(key_change),2):
+                    if key_change[i] in output.keys():
+                        output[key_change[i+1]] = output.pop(key_change[i])
+                if self.monteCarlo:
+                    self.status.emit('\n')
+                    self.status.emit('Number of Monte Carlo simulations: '+str(output['Number of Monte Carlo simulations']))
+                self.status.emit('\n')
+                raws = [[k, v] for k, v in list(output.items()) if any(r in k for r in ['raw', 'Raw'])]
+                rotate_raws = list(zip(*raws))
+                self.status.emit(tabulate(rotate_raws))
+                self.status.emit('\n')
+                corrs = [[k, v] for k, v in list(output.items()) if any(r in k for r in ['corr', 'Corr'])]
+                rotate_corrs = list(zip(*corrs))
+                self.status.emit(tabulate(rotate_corrs))
+                self.status.emit('\n')
+                self.finished.emit()
+            except:
+                self.status.emit('Date cannot be calculated from these values\n')
+                self.finished.emit()
+
+def launch_GUI():
+    try:
+        import pyi_splash
+        pyi_splash.close()
+    except:
+        pass
+    app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon('AlphaDecayIcon.ico'))
+    MainWindow = QtWidgets.QMainWindow()
+    ui = GUI_App(MainWindow)
+    MainWindow.show()
+    app.exec_()
+
 if __name__ == "__main__":
     try:
         import pyi_splash
