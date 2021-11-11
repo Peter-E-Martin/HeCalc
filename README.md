@@ -71,6 +71,6 @@ If HeCalc is installed in site-packages (i.e., is downloaded as a Python package
 |hecalc.meesters_dunai()|Generates a non-iterative date solution using the Meesters & Dunai 2005 method|
 |hecalc.get_date|Combines the two above functions to provide raw and alpha ejection-corrected dates directly from a given dataset|
 |hecalc.date_uncertainty()|Performs linear uncertainty propagation for a given dataset, assuming that 235U is calculated from the measurement of 238U|
-|hecalc.date_uncertainty_with235|Performs the same linear uncertainty propagation but accounts for the fact that the 235U measurement is independent of the 238U measurement if it was measured directly|
+|hecalc.date_uncertainty_with235()|Performs the same linear uncertainty propagation but accounts for the fact that the 235U measurement is independent of the 238U measurement if it was measured directly|
 |hecalc.monte_carlo()|Runs Monte Carlo uncertainty propagation on a dataset assuming gaussian uncertainty, and outputs statistics and (if requested) the histogram and parameterized fit for the data|
 |hecalc.hecalc_main()|This is a manual function to run exactly the same set of data reduction as the software version, though users can input specific options more flexibly|
