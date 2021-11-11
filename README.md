@@ -2,6 +2,12 @@
 
 This is a package written in Python 3.8 to reduce (U-Th)/He data, including statistically rigorous propagation of uncertainty. 
 
+## Installation
+
+HeCalc is available through the python package index (PyPI), so you can install it using ~~~pip install hecalc~~~
+
+Alternatively, some functionality is provided directly by the python scripts hosted here on GitHub, so adding them directly to a data reduction workflow should be straightforward (as long as the dependencies found in pyproject.toml are met!).
+
 ## Running HeCalc
 
 There are three main methods of running HeCalc:
