@@ -33,7 +33,9 @@ Having installed HeCalc with ```pip install hecalc```, it is possible to run the
 Data input for HeCalc can be in .xlsx, .xls, .csv, or tab-delimited .txt form. The following columns **must** be present with these exact names:
 Sample, mol 4He, mol 238U, mol 232Th, mol 147Sm,  238Ft, 235Ft, 232Ft, 147Ft
 Each column must be followed by its uncertainty value, **even if that uncertainty is 0**. A typical header column will therefore look something like this:
+
 Sample | mol 4He | ± | mol 238U | ± | mol 232Th | ± | mol 147Sm | ± | 238Ft | ± | 235Ft | ± | 232Ft | ± | 147Ft | ±
+
 An example file is included in the Test directory that can serve as a template for data entry.
 
 ## User Options
