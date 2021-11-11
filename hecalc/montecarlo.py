@@ -16,9 +16,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Created on Thu Nov  4 11:03:45 2021
+This module takes a dataset and runs Monte Carlo uncertainty modeling.
 
-@author: Peter
+It contains functions for the Monte Carlo modeling and to generate
+histograms and parameterize those histograms if a user so desires.
 """
 
 from scipy.stats import skewnorm as sk
@@ -27,6 +28,26 @@ import numpy as np
 from .date_calculation import get_date
 
 def make_histogram(mc, parameterize):
+    '''
+    Create histograms and potentially parameterize them as skew-normal
+    probability distribution functions.
+    
+    Parameters
+    ----------
+    mc : Array-like
+        The list of numbers to place in a histogram
+        
+    parameterize : bool
+        whether to parameterize the histogram
+        
+    Returns
+    -------
+    Generates a dictionary with the histogram and potentially parameters.
+    the histogram is returned as a list of the bin centers and a list of
+    the number of samples within the bin. The parameters areassociated
+    with the key "fit distribution", and are a list of the three parameters
+    (skewness, location, scale) to calculate a skew-normal distribution
+    '''
     # Generate histogram with bins centered
     bins = int(len(mc)/1000)
     if bins>1000:
@@ -60,6 +81,92 @@ def monte_carlo(mc_number, He, He_s=0,
                 U238_s=0, U235_s=None, Th232_s=0, Sm147_s=0,
                 Ft238_s=0, Ft235_s=0, Ft232_s=0, Ft147_s=0,
                 histogram=False, parameterize=False):
+    '''
+    Performs Monte Carlo modeling for a (U-Th)/He dataset. Note that
+    while all radionuclides are optional and default to 0, at least one
+    *MUST* be >0.
+    
+    Parameters
+    ----------
+    mc_number : int
+        The number of monte carlo cycles to perform
+        
+    He : float
+        The amount of helium measured. The exact units are unimportant
+        as long as they are consistent with the other radionuclides
+    
+    He_s : float, optional
+        The uncertainty in He, in the same units
+        
+    U238 : float, optional
+        The amount of 238U measured
+        
+    U238_s : float, optional
+        The uncertainty in 238U
+        
+    U235 : float, optional
+        The amount of 2385U measured. If no 235U is provided, it is assumed
+        to be present at the standard ratio of 137.818 238U/235U
+        
+    U235_s : float, optional
+        The uncertainty in 235U, if measured.
+        
+    Th232 : float, optional
+        The amount of Th232 measured
+        
+    Th232_s : float, optional
+        The uncertainty in Th232
+        
+    Sm147 : float, optional
+        The amount of Sm147 measured
+        
+    Sm147_s : float, optional
+        The uncertainty in Sm147
+    
+    Ft238 : float, optional
+        The alpha ejection correction for 238U. Should be between 0-1.
+        
+    Ft238_s : float, optional
+        The uncertainty in Ft238
+        
+    Ft235 : float, optional
+        The alpha ejection correction for 235U. Should be between 0-1.
+        
+    Ft235_s : float, optional
+        The uncertainty in Ft235
+        
+    Ft232 : float, optional
+        The alpha ejection correction for 232Th. Should be between 0-1.
+        
+    Ft232_s : float, optional
+        The uncertainty in Ft232
+        
+    Ft147 : float, optional
+        The alpha ejection correction for 147Sm. Should be between 0-1.
+        
+    Ft147_s : float, optional
+        The uncertainty in Ft147
+        
+    histogram : bool, optional
+        Whether to generate a histogram for the Monte Carlo results
+        
+    parameterize : bool, optional
+        Whether to parameterize the histogram with a skew-normal distribution.
+        If histogram is False, parameterize will not be used
+        
+    Returns
+    -------
+    Produces a dictionary with entries for the raw and alpha-ejection corrected
+    results. Each entry is a dictionary with mean, +/- 68% CI, and % skew. If
+    histogram is true, the histogram for each is returned as a list of the bin
+    centers and a list of the number of samples within the bin. The parameters
+    are associated with the key "fit distribution", and are a list of the three
+    parameters (skewness, location, scale) to calculate a skew-normal distribution
+    '''
+    # Generate arrays of each datum using its uncertainty
+    # This is strictly gaussian for now, but could include
+    # additional distributions or even arbitrary distributions
+    # in the future.
     He = np.random.normal(He, He_s, mc_number)
     U238 = np.random.normal(U238, U238_s, mc_number)
     if U235 == None:
@@ -73,9 +180,12 @@ def monte_carlo(mc_number, He, He_s=0,
     Ft232 = np.random.normal(Ft232, Ft232_s, mc_number)
     Ft147 = np.random.normal(Ft147, Ft147_s, mc_number)
     
+    # Call the get_date function to calculate a date for each
+    # of the randomly generated data
     MonteCarlo_t = get_date(He, U238, U235, Th232, Sm147,
                             Ft238, Ft235, Ft232, Ft147)
     
+    # Create a dictionary to save results to
     mc_results = {'raw date': {},
                   'corrected date': {}}
     # Produce statistics and save

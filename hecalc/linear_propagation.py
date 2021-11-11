@@ -144,8 +144,8 @@ def date_uncertainty(He, t, He_s=0,
                      U238_s=0, Th232_s=0, Sm147_s=0,
                      Ft238_s=0, Ft235_s=0, Ft232_s=0, Ft147_s=0):
     '''
-    Returns symmetrical uncertainty for a given date with uncertainty
-    in He, radionuclides, and all Ft values.
+    Returns symmetrical uncertainty via linear uncertainty propagation
+    for a given date with uncertainty in He, radionuclides, and/or Ft values.
     
     Accepts integers, floats, or numpy arrays.
     
@@ -153,16 +153,6 @@ def date_uncertainty(He, t, He_s=0,
     The exact date is required; this function does *not* calculate
     date explicitly. If an incorrect date is provided, the uncertainty
     calculation will also be incorrect.
-    
-    A large number of arguments are available for this module.
-    Required positional arguments:
-        He, t, at least one radionuclide
-    Optional arguments:
-    He_s, U238, U235, Th232, Sm147, Ft238, Ft235, Ft232, Ft147,
-    U238_s, Th232_s, Sm147_s, Ft238_s, Ft235_s, Ft232_s, Ft147_s
-    where U238_s is uncertainty in U238 for example.
-    All radionuclides and uncertainties default to a value of 0,
-    while all Fts default to a value of 1.
     
     ~THIS FUNCTION SHOULD ONLY BE USED IF 235U IS INFERRED FROM 238U~
     If U235 was measured directly, the function date_uncertainty_with235()
@@ -173,6 +163,69 @@ def date_uncertainty(He, t, He_s=0,
     and date_uncertainty_with235() should be used instead.
     
     Note that at least one radionuclide value must be specified.
+    
+    Parameters
+    ----------
+    He : float or array-like, optional
+        The amount of helium measured. The exact units are unimportant
+        as long as they are consistent with the other radionuclides
+    
+    t : float or array-like, optional
+        The date for the uncertainty being calculated. This should be
+        accurately calculated (e.g., using the get_date() function)
+    
+    He_s : float or array-like, optional
+        The uncertainty in He, in the same units
+        
+    U238 : float or array-like, optional
+        The amount of 238U measured
+        
+    U235 : float or array-like, optional
+        The amount of 2385U measured. If no 235U is provided, it is assumed
+        to be present at the standard ratio of 137.818 238U/235U
+        
+    Th232 : float or array-like, optional
+        The amount of Th232 measured
+        
+    Sm147 : float or array-like, optional
+        The amount of Sm147 measured
+    
+    Ft238 : float or array-like, optional
+        The alpha ejection correction for 238U. Should be between 0-1.
+        
+    Ft235 : float or array-like, optional
+        The alpha ejection correction for 235U. Should be between 0-1.
+        
+    Ft232 : float or array-like, optional
+        The alpha ejection correction for 232Th. Should be between 0-1.
+        
+    Ft147 : float or array-like, optional
+        The alpha ejection correction for 147Sm. Should be between 0-1.
+    
+    U238_s : float or array-like, optional
+        The uncertainty in 238U
+
+    Th232_s : float or array-like, optional
+        The uncertainty in Th232
+        
+    Sm147_s : float or array-like, optional
+        The uncertainty in Sm147
+        
+    Ft238_s : float or array-like, optional
+        The uncertainty in Ft238
+        
+    Ft235_s : float or array-like, optional
+        The uncertainty in Ft235
+        
+    Ft232_s : float or array-like, optional
+        The uncertainty in Ft232
+        
+    Ft147_s : float or array-like, optional
+        The uncertainty in Ft147
+        
+    Returns
+    -------
+    float or array-like of uncertainty values
     '''
     if U235 is None:
         U235 = U238/137.818
@@ -212,10 +265,6 @@ def date_uncertainty_with235(He, t, He_s=0,
     Returns symmetrical uncertainty for a given date with uncertainty
     in He, radionuclides, and/or all Ft values.
     
-    ~THIS FUNCTION SHOULD ONLY BE USED IF 235U HAS BEEN MEASURED DIRECTLY~
-    If 235U is instead inferred from 238U measurement, the function
-    "date_uncertainty" should be used instead.
-    
     Accepts integers, floats, or numpy arrays.
     
     WARNING:
@@ -223,17 +272,78 @@ def date_uncertainty_with235(He, t, He_s=0,
     date explicitly. If an incorrect date is provided, the uncertainty
     calculation will also be incorrect.
     
-    A large number of arguments are available for this module.
-    Required positional arguments:
-        He, t, at least one radionuclide
-    Optional arguments:
-    He_s, U238, U235, Th232, Sm147, Ft238, Ft235, Ft232, Ft147,
-    U238_s, Th232_s, Sm147_s, Ft238_s, Ft235_s, Ft232_s, Ft147_s
-    where U238_s is uncertainty in U238 for example.
-    All radionuclides and uncertainties default to a value of 0,
-    while all Fts default to a value of 1.
+        
+    ~THIS FUNCTION SHOULD ONLY BE USED IF 235U HAS BEEN MEASURED DIRECTLY~
+    If 235U is instead inferred from 238U measurement, the function
+    "date_uncertainty" should be used instead.
     
     Note that at least one radionuclide value must be specified.
+    
+    Parameters
+    ----------
+    He : float or array-like, optional
+        The amount of helium measured. The exact units are unimportant
+        as long as they are consistent with the other radionuclides
+    
+    t : float or array-like, optional
+        The date for the uncertainty being calculated. This should be
+        accurately calculated (e.g., using the get_date() function)
+    
+    He_s : float or array-like, optional
+        The uncertainty in He, in the same units
+        
+    U238 : float or array-like, optional
+        The amount of 238U measured
+        
+    U235 : float or array-like, optional
+        The amount of 2385U measured. If no 235U is provided, it is assumed
+        to be present at the standard ratio of 137.818 238U/235U
+        
+    Th232 : float or array-like, optional
+        The amount of Th232 measured
+        
+    Sm147 : float or array-like, optional
+        The amount of Sm147 measured
+    
+    Ft238 : float or array-like, optional
+        The alpha ejection correction for 238U. Should be between 0-1.
+        
+    Ft235 : float or array-like, optional
+        The alpha ejection correction for 235U. Should be between 0-1.
+        
+    Ft232 : float or array-like, optional
+        The alpha ejection correction for 232Th. Should be between 0-1.
+        
+    Ft147 : float or array-like, optional
+        The alpha ejection correction for 147Sm. Should be between 0-1.
+    
+    U238_s : float or array-like, optional
+        The uncertainty in 238U
+        
+    U235_s : float or array-like, optional
+        The uncertainty in 235U, if measured.
+
+    Th232_s : float or array-like, optional
+        The uncertainty in Th232
+        
+    Sm147_s : float or array-like, optional
+        The uncertainty in Sm147
+        
+    Ft238_s : float or array-like, optional
+        The uncertainty in Ft238
+        
+    Ft235_s : float or array-like, optional
+        The uncertainty in Ft235
+        
+    Ft232_s : float or array-like, optional
+        The uncertainty in Ft232
+        
+    Ft147_s : float or array-like, optional
+        The uncertainty in Ft147
+        
+    Returns
+    -------
+    float or array-like of uncertainty values
     '''
     return (
         (_He_prime(U238, U235, Th232, Sm147,

@@ -52,9 +52,47 @@ def iterated_date(He, t_guess,
     the He age equation is not well-behaved (e.g., a radionuclide value
     is negative). In this case, a NaN value is returned.
     
-    Required inputs: He, estimated t, and at least one radioniclide value.
-    Optional inputs: U238, U235, Th232, Sm147, Ft238,
-                     Ft235, Ft232, Ft147
+    Note that at least one radionuclide value must be specified.
+    
+    Parameters
+    ----------
+    He : float or array-like, optional
+        The amount of helium measured. The exact units are unimportant
+        as long as they are consistent with the other radionuclides
+    
+    t_guess : float or array-like, optional
+        An estimation of the date to be calculated. A good approximation
+        can be developed from the Meesters and Dunai method, available in
+        this module via the meesters_dunai() function
+    
+    U238 : float or array-like, optional
+        The amount of 238U measured
+        
+    U235 : float or array-like, optional
+        The amount of 2385U measured. If no 235U is provided, it is assumed
+        to be present at the standard ratio of 137.818 238U/235U
+        
+    Th232 : float or array-like, optional
+        The amount of Th232 measured
+        
+    Sm147 : float or array-like, optional
+        The amount of Sm147 measured
+    
+    Ft238 : float or array-like, optional
+        The alpha ejection correction for 238U. Should be between 0-1.
+        
+    Ft235 : float or array-like, optional
+        The alpha ejection correction for 235U. Should be between 0-1.
+        
+    Ft232 : float or array-like, optional
+        The alpha ejection correction for 232Th. Should be between 0-1.
+        
+    Ft147 : float or array-like, optional
+        The alpha ejection correction for 147Sm. Should be between 0-1.
+        
+    Returns
+    -------
+    float or array-like of date(s) in years
     '''
     # if U235 is left with the default value, assume it must be
     # based on a constant ratio to U238
@@ -111,7 +149,7 @@ def meesters_dunai(He,
                    U238=0, U235=None, Th232=0, Sm147=0,
                    Ft238=1, Ft235=1, Ft232=1, Ft147=1):
     '''
-    Calculate a (U-Th)/He date using the method of Meesters and Dunai (2005).
+    Calculate a (U-Th)/He date using the method of Meesters and Dunai (2005)[1].
     Takes floats, ints, or numpy arrays for
     U238, U235, Th232, Sm147, Ft238, Ft235, Ft232, Ft147, and He.
     
@@ -124,12 +162,47 @@ def meesters_dunai(He,
     If non-physical values are passed to this function (e.g., negative
     production rates of He), a linearized estimate of date is returned
     instead using the equation t = He/TotalProduction.
+        
+    Parameters
+    ----------
+    He : float or array-like, optional
+        The amount of helium measured. The exact units are unimportant
+        as long as they are consistent with the other radionuclides
     
-    Returns non-iterative date in years.
+    U238 : float or array-like, optional
+        The amount of 238U measured
+        
+    U235 : float or array-like, optional
+        The amount of 2385U measured. If no 235U is provided, it is assumed
+        to be present at the standard ratio of 137.818 238U/235U
+        
+    Th232 : float or array-like, optional
+        The amount of Th232 measured
+        
+    Sm147 : float or array-like, optional
+        The amount of Sm147 measured
     
-    Required inputs: He, and at least one radioniclide value.
-    Optional inputs: U238, U235, Th232, Sm147, Ft238,
-                     Ft235, Ft232, Ft147
+    Ft238 : float or array-like, optional
+        The alpha ejection correction for 238U. Should be between 0-1.
+        
+    Ft235 : float or array-like, optional
+        The alpha ejection correction for 235U. Should be between 0-1.
+        
+    Ft232 : float or array-like, optional
+        The alpha ejection correction for 232Th. Should be between 0-1.
+        
+    Ft147 : float or array-like, optional
+        The alpha ejection correction for 147Sm. Should be between 0-1.
+        
+    Returns
+    -------
+    float or array-like of non-iterative date(s) in years
+    
+    References
+    ----------
+    [1] Meesters, A.G.C.A., Dunai, T.J., 2005. A noniterative solution of the 
+    (U-Th)/He age equation. Geochemistry, Geophysics, Geosystems 6.
+    https://doi.org/10.1029/2004GC000834
     '''
     if U235 is None:
         U235 = U238/137.818
@@ -155,16 +228,49 @@ def get_date(He,
              Ft238=1, Ft235=1, Ft232=1, Ft147=1):
     '''
     Calculate raw (uncorrected) and alpha-ejection corrected
-    dates. These are returned in a list with uncorrected
-    date(s) first and corrected date(s) second.
+    dates. Using the Newton-Raphson method to calculate dates
+    with date esimtation provided by the Meesters and Dunai method.
+    These are returned in a diction with keys "raw date" and
+    "corrected date"
     
     Returned dates are in years.
     
     Takes int, float, or numpy arrays as input.
     
-    Required inputs: He, and at least one radioniclide value.
-    Optional inputs: U238, U235, Th232, Sm147, Ft238,
-                     Ft235, Ft232, Ft147
+    Parameters
+    ----------
+    He : float or array-like, optional
+        The amount of helium measured. The exact units are unimportant
+        as long as they are consistent with the other radionuclides
+    
+    U238 : float or array-like, optional
+        The amount of 238U measured
+        
+    U235 : float or array-like, optional
+        The amount of 2385U measured. If no 235U is provided, it is assumed
+        to be present at the standard ratio of 137.818 238U/235U
+        
+    Th232 : float or array-like, optional
+        The amount of Th232 measured
+        
+    Sm147 : float or array-like, optional
+        The amount of Sm147 measured
+    
+    Ft238 : float or array-like, optional
+        The alpha ejection correction for 238U. Should be between 0-1.
+        
+    Ft235 : float or array-like, optional
+        The alpha ejection correction for 235U. Should be between 0-1.
+        
+    Ft232 : float or array-like, optional
+        The alpha ejection correction for 232Th. Should be between 0-1.
+        
+    Ft147 : float or array-like, optional
+        The alpha ejection correction for 147Sm. Should be between 0-1.
+        
+    Returns
+    -------
+    float or array-like of date(s) in years
     '''
     if U235 is None:
         U235 = U238/137.818

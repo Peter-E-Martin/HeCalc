@@ -57,16 +57,14 @@ import pandas as pd
 import numpy as np
 import re
 from openpyxl import styles, utils, Workbook
-import warnings
 import tkinter
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from .date_calculation import get_date
 from .linear_propagation import date_uncertainty, date_uncertainty_with235
 from .montecarlo import monte_carlo
 
-warnings.filterwarnings("ignore")
-
 def _get_cols(linear, monteCarlo, parameterize):
+    '''Helper function to create the names of the data to output'''
     save_columns = ['Sample',
                     'Raw date',
                     'Mean raw date',
@@ -104,6 +102,8 @@ def _get_cols(linear, monteCarlo, parameterize):
         save_columns = ['Sample',
                         'Raw date',
                         'Corrected date']
+    # If parameterization is chosen, add the relevant columns
+    # at the end of the raw and corrected data output
     if parameterize:
         ins_idx = save_columns.index('% Skewness of raw distribution')
         add_cols = ['raw fit a','raw fit u','raw fit s']
@@ -114,6 +114,13 @@ def _get_cols(linear, monteCarlo, parameterize):
     return save_columns
 
 def _load_file(file, measured_U235, sheet):
+    '''
+    Ensures a user-provided file has the correct columns and loads the data.
+    
+    The columns can be in any order as long as they are present and have
+    the uncertainty in the following column.
+    '''
+    # List of expected column names
     cols = ['mol 238U',
             'mol 232Th',
             'mol 147Sm',
@@ -125,34 +132,49 @@ def _load_file(file, measured_U235, sheet):
     if measured_U235:
         cols.insert(1, 'mol 235U')
     
+    # Check file type and load data
     if file[-5:] == '.xlsx' or file[-4:] == '.xls':
         if not sheet:
             try:
-                data_load = pd.read_excel(file) # Load the data sheet
+                data_load = pd.read_excel(file)
+                # Ensure that all expected columns are present
                 assert set(cols).issubset(list(data_load.columns))
             except AssertionError:
                 return None
         elif sheet:
             try:
-                data_load = pd.read_excel(file, sheet_name = sheet) # Load the data sheet
+                data_load = pd.read_excel(file, sheet_name = sheet)
                 assert set(cols).issubset(list(data_load.columns))
             except:
                 return None
     if file[-4:] == '.csv':
-        data_load = pd.read_csv(file)
+        try:
+            data_load = pd.read_csv(file)
+            assert set(cols).issubset(list(data_load.columns))
+        except AssertionError:
+            return None
     if file[-4:] == '.txt':
-        data_load = pd.read_csv(file, delimiter="\t")
+        try:
+            data_load = pd.read_csv(file, delimiter="\t")
+            assert set(cols).issubset(list(data_load.columns))
+        except AssertionError:
+            return None
     
+    # create a list of the column headers and the name of following column
+    # to get the uncertainty columns as well
     col_load = ['Sample']
     for c in cols:
         col_load.append(c)
         col_load.append(data_load.columns[data_load.columns.get_loc(c)+1])
     
+    # Create list of column header names to load
     final_cols = ['Sample']
     for i in range(len(cols)):
         final_cols.append(cols[i])
         final_cols.append(u'\u00B1 '+cols[i])
     
+    # Restrict data only to relevant data and shorten the
+    # column names for easier handling down the road
     data = data_load[col_load]
     data.columns = final_cols
     short_names = {name:name.replace('mol ','') for name in data.columns if 'mol ' in name}
@@ -161,6 +183,9 @@ def _load_file(file, measured_U235, sheet):
     return data
 
 def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs):
+    '''
+    Helper function to construct the workbook to be saved.
+    '''
     # Generate the excel file
     book = Workbook()
     
@@ -169,7 +194,6 @@ def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs
     if 'raw histogram' in save_out:
         hist_sheet = book.active
         hist_sheet.title = 'Histogram Output'
-        
         keys = {0: 'raw histogram',
                 1: 'corrected histogram'}
         xy = {0: 'bin centers',
@@ -184,6 +208,7 @@ def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs
                                         value=save_out[keys[i]][col][n][row])
         del save_out['raw histogram']
         del save_out['corrected histogram']
+        # Format histogram column headers
         for header in hist_sheet["1:1"]:
             header.font = styles.Font(bold=True)
             header.alignment = styles.Alignment(wrapText=True)
@@ -242,13 +267,17 @@ def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs
     return book
 
 def _linear_propagation(nominal_t, data, measured_U235):
+    '''
+    Helper function to call the linear uncertainty propagation functions
+    including all optional parameters.
+    '''
     if measured_U235:
         linear_raw_uncertainty = date_uncertainty_with235(
             data['4He'], nominal_t['raw date'], data[u'\u00B1 4He'],
             data['238U'], data['235U'], data['232Th'], data['147Sm'],
             U238_s=data[u'\u00B1 238U'], U235_s=data[u'\u00B1 235U'],
             Th232_s=data[u'\u00B1 232Th'], Sm147_s=data[u'\u00B1 147Sm']
-                                                          )
+            )
         linear_corr_uncertainty = date_uncertainty_with235(
             data['4He'], nominal_t['corrected date'], data[u'\u00B1 4He'],
             data['238U'], data['235U'], data['232Th'], data['147Sm'],
@@ -257,14 +286,14 @@ def _linear_propagation(nominal_t, data, measured_U235):
             data[u'\u00B1 232Th'], data[u'\u00B1 147Sm'],
             data[u'\u00B1 238Ft'], data[u'\u00B1 235Ft'],
             data[u'\u00B1 232Ft'], data[u'\u00B1 147Ft']
-                                                           )
+            )
     else:
         linear_raw_uncertainty = date_uncertainty(
             data['4He'], nominal_t['raw date'], data[u'\u00B1 4He'],
             data['238U'], data['238U']/137.818, data['232Th'], data['147Sm'],
             U238_s=data[u'\u00B1 238U'], Th232_s=data[u'\u00B1 232Th'],
             Sm147_s=data[u'\u00B1 147Sm']
-                                                  )
+            )
         linear_corr_uncertainty = date_uncertainty(
             data['4He'], nominal_t['corrected date'], data[u'\u00B1 4He'],
             data['238U'], data['238U']/137.818, data['232Th'], data['147Sm'],
@@ -272,16 +301,18 @@ def _linear_propagation(nominal_t, data, measured_U235):
             data[u'\u00B1 238U'], data[u'\u00B1 232Th'], data[u'\u00B1 147Sm'],
             data[u'\u00B1 238Ft'], data[u'\u00B1 235Ft'],
             data[u'\u00B1 232Ft'], data[u'\u00B1 147Ft']
-                                                   )
+            )
     return {'raw unc': linear_raw_uncertainty, 'corr unc': linear_corr_uncertainty}
 
 def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                  histograms, parameterize, decimals, precision):
-    
+    '''Gets all relevant data for a single samle'''
+    # Create the U235 data
     U235 = sample_data['238U']/137.818
     if measured_U235:
         U235 = sample_data['235U']
     
+    # Get the nominal date from the input data
     nominal_t = get_date(sample_data['4He'], sample_data['238U'], U235,
                          sample_data['232Th'], sample_data['147Sm'],
                          sample_data['238Ft'], sample_data['235Ft'],
@@ -297,6 +328,7 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         save_out['Linear corrected uncertainty'].append(round(linear_uncertainty['corr unc']/1e6,decimals))
     
     if monteCarlo:
+        # Estimate the number of cycles needed to reach the requested precision
         s_est = linear_uncertainty['raw unc']
         mean_est = nominal_t['corrected date']
         mc_number = s_est**2/(precision*mean_est)**2
@@ -305,14 +337,16 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         else:
             mc_number = int(mc_number)
         save_out['Number of Monte Carlo simulations'].append(mc_number)
-            
+        
+        # Create U235 data for the monteCarlo function
         if not measured_U235:
             U235 = None
             U235_s = None
         elif measured_U235:
             U235 = sample_data['235U']
             U235_s = sample_data[u'\u00B1 235U']
-            
+        
+        # Call the monte carlo module
         mc_results = monte_carlo(
             mc_number, sample_data['4He'], sample_data[u'\u00B1 4He'],
             sample_data['238U'], U235, sample_data['232Th'], sample_data['147Sm'],
@@ -322,8 +356,9 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             sample_data[u'\u00B1 238Ft'], sample_data[u'\u00B1 235Ft'],
             sample_data[u'\u00B1 232Ft'], sample_data[u'\u00B1 147Ft'],
             histogram=histograms, parameterize=parameterize
-                                 )
+            )
         
+        # Put Monte Carlo results into data framework for saving
         for ft in ['raw', 'corrected']:
             save_out['Mean '+ft+' date'].append(round(mc_results[ft+' date']['mean']/1e6,decimals))
             save_out[' +68% CI '+ft].append(round(mc_results[ft+' date']['+68% CI']/1e6,decimals))
@@ -346,50 +381,90 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
 def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, measured_U235=False,
                 monteCarlo=True, linear=True, histograms=False, parameterize=False):
     '''
-    This is the main module to run HeCalc as a standalone program
-    through the command line interface. The user will first be
-    prompted to select a number of options:
-    1. the precision of the Monte Carlo mean determines the number
-       of Monte Carlo simulations to perform; the number input here
-       is the relative precision in percent (i.e., for a sample
-       with a mean age of 50 Ma, a 1% precision would be +/- 0.5 Ma)
-    2. the number of decimals to report simply dictates the
-       level to which the code will round the result; this
-       has no bearing on the statistical portions of the code
-    3. Whether 235U was measured directly. This should only
-       be selected if 235 is not assumed from 238U measurement
-    4. Whether to run the Monte Carlo simulation.
-    5. Whether to run linear uncertainty propagation
-    6a. Whether to generate histograms. These are saved out as txt files
-       with bin centers and relative height.
-    6b. Whether to parameterize the histogram. In this case, the
-        histogram will be fit to a skewnormal distribution as
-        a first-order approximation of the date as a continuous
-        random variable.
+    Read in a file with He, radionuclide, and Ft data and their uncertainties
+    and perform data reduction and uncertainty propagation.
     
-    The input file for this module must have the following headers:
-    Sample, 238U, 232Th, 147Sm, 4He, 238Ft, 235Ft, 232Ft, and 147Ft
-    Sample is the sample name
-    238U, 232Th, 147Sm, and 4He are amounts of each nuclide and
-    can be in any unit (e.g., mol, atoms, mol/g)
-    238Ft, 235Ft, 232Ft, and 147Ft are the isotope-specific
-    Ft values for each nuclide. see Ketcham et al., 2011 for
-    how these may be calculated.
+    Parameters
+    ----------
+    file : None, path to file, optional
+        If a path is provided, HeCalc will load the given path. Input
+        files must be .xlsx, .xls, .csv, or tab-delimited .txt.
+        The input file for this module must have the following headers:
+        Sample, mol 238U, mol 232Th, mol 147Sm, mol 4He,
+        238Ft, 235Ft, 232Ft, and 147Ft
+        Sample is the sample name
+        mol 238U, mol 232Th, mol 147Sm, and mol 4He are amounts of each
+        nuclide; these can be in any self-consistent unit (e.g., mol, fmol, atoms, mol/g)
+        238Ft, 235Ft, 232Ft, and 147Ft are the isotope-specific
+        Ft values for each nuclide. see Ketcham et al., 2011 for
+        how these may be calculated.
+        If file is None (the default), a Tkinter popup will prompt
+        an input for data reduction
+        
+    saveAs : None, path, optional
+        If a path is provided, HeCalc will save the results
+        to this location.
+        If saveAs is None (the default), a Tkinter popup will prompt
+        an input for save destination
+        
+    percent_precision: float, optional
+        the precision of the Monte Carlo mean determines the number
+        of Monte Carlo simulations to perform; the number input here
+        is the relative precision in percent (i.e., for a sample
+        with a mean age of 50 Ma, a 1% precision would be +/- 0.5 Ma)
+        
+    decimals: int, optional
+        the number of decimals to report. This simply dictates the
+        level to which the code will round the result; this
+        has no bearing on the statistical portions of the code
+        
+    measured_U235: bool, optional
+        Whether 235U was measured directly. This should only
+        be selected in the very rare case that 235U is not
+        assumed from 238U measurement
+        
+    monteCarlo: bool, optional
+        Whether to run Monte Carlo uncertainty propagation
+        
+    linear: bool, optional
+        Whether to run linear uncertainty propagation
+        
+    histograms: bool, optional
+        Whether to generate histograms if a Monte Carlo model is run.
     
-    required arguments: none
-    optional arguments: file
-    file: a full path to a correctly formatted excel, txt, or csv
-          file on the local machine where HeCalc is being run.
+    parameterize: bool, optional
+        Whether to parameterize the histograms with a Skew-normal function.
+        
+    Returns
+    -------
+    Saves out an excel file at the path sepcified by saveAs. Results
+    for both raw and alpha ejection corrected calculations are included.
+    A header giving the requested precision (if Monte Carlo modeling
+    was chosen) and the path for the source file
+    For all calculations, the sample name and date are returned
+    If linear is chosen, the 1-sigma uncertainty is included
+    If montecarlo is chosen, the 68% confidence intervals, mean date,
+    skewness (as a percent difference between the confidence intervals),
+    and number of cycles necessary to reach the requested precision.
+    If parameterization was requested, the fitted parameters a, u, and s
+    are included with a being skewness, u the location parameter, and
+    s the shape parameter for a Skew-normal function.
+    If histograms are produced, these will be saved in a second excel
+    sheet with the both the raw and corrected histograms given with
+    bin centers (in units of Ma) and the absolute number of Monte Carlo
+    simulations corresponding to each date.
     '''
-    # Get user-defined variables through command line entry
-    precision = percent_precision/100 # convert from % to proportion
+
+    # Convert user-defined precision to proportion
+    precision = percent_precision/100
     
-    # create the list of columns to be used as headers in the output
+    # Create the list of columns to be used as headers in the output
     # these vary based on which (if any) uncertainty propagation is
     # chosen by the user.
-    save_columns = _get_cols(linear,monteCarlo,parameterize)
+    save_columns = _get_cols(linear, monteCarlo, parameterize)
     save_out = {c: [] for c in save_columns}
     
+    # Generate additional variables to save the histograms
     if histograms:
         save_out['raw histogram'] = []
         save_out['corrected histogram'] = []
@@ -397,26 +472,23 @@ def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, meas
     # Get the file containing the data if no file was provided
     if file == None:
         root = tkinter.Tk()
-        try:
-            file = askopenfilename(title = 'Choose file to reduce') # brings up window to select data file
-            root.wm_withdraw()
-            assert any(ext in file[-4:] for ext in ['xlsx', '.xls', '.csv', '.txt'])
-        except AssertionError:
-            print('Input file must be excel, csv, or tab-delimited text file')
-            file = askopenfilename(title = 'Choose file to reduce') # brings up window to select data file
-            root.wm_withdraw()
+        file = askopenfilename(title = 'Choose file to reduce',
+                               filetypes=[("Excel files", "*.xlsx .*xls"),
+                                          ("Comma-separated values", "*.csv"),
+                                          ("Tab-delimited text", "*.txt")])
+        root.wm_withdraw()
     
+    # Get the path to save to if none provided
     if saveAs == None:
         root = tkinter.Tk()
         saveAs = asksaveasfilename(filetypes=[("Excel files", "*.xlsx .*xls")],
                                      defaultextension=".xlsx")
         root.wm_withdraw()
     
-    # Load in the data. The helper function _load_file
-    # goes through a series of checks to make sure the 
-    # file has the appropriate information. If not,
-    # an input is requested in case an excel workbook
-    # with multiple sheets has been provided
+    # Load in the data. The helper function _load_file goes through
+    # a series of checks to make sure the file has the appropriate
+    # information. If not, an input is requested in case an excel
+    # workbook with multiple sheets has been provided
     data = _load_file(file, measured_U235, None)
     while data is None:
         sheet = input('Name of sheet to read data from: ')
@@ -424,8 +496,9 @@ def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, meas
         if data is None:
             print('Ensure columns are correctly labeled')
     
-    # This is the main loop that calculates progress
-    # and calls the individual data reduction modules
+    # This is the main loop that calculates progress and calls the main
+    # _sample_loop function, which takes the relevant inputs and calls
+    # the individual HeCalc functions needed
     for i in range(len(data)):
         # Update user of new sample being analyzed
         print(('Now working on sample ' + str(data['Sample'].iloc[i])))
@@ -435,11 +508,13 @@ def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, meas
         if re.sub('[^\w\-_]', '_', data['Sample'].iloc[i]) != data['Sample'].iloc[i]:
             data['Sample'].iloc[i] = re.sub('[^\w\-_]', '_', data['Sample'].iloc[i])
         
+        # Get the individual sample data as a dictionary
         sample_data = data.loc[[i]].to_dict(orient='record')[0]
         
         save_out = _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                                 histograms, parameterize, decimals, precision)
 
+    # Create the excel workbook using the input parameters
     book = _make_excel(save_out, save_columns, file, monteCarlo, percent_precision, saveAs)
     
     # Save the excel workbook
