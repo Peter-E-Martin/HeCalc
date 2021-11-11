@@ -1,19 +1,53 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Nov  9 10:22:06 2021
+# This file is part of HeCalc, which calculates (U-Th)/He dates and uncertainties
+# Copyright (C) 2021 Peter E. Martin <pemartin92@gmail.com>
 
-@author: Peter
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+This script is provided to allow command-line interface and GUI
+support for HeCalc such that the package and GUI can be used without
+the need for every user to incorporate individual functions in their
+own code.
+
+When this script is run directly, the user will be prompted with a
+series of options:
+-Whether to run in the command line or with a graphical user interface
+    -If the GUI is selected, no additional command line steps are necessary
+-What percent precision the user wishes to target for the mean of the Monte
+Carlo results (assuming Monte Carlo modeling is chosen later)
+-How many decimals to output. This option affects only the saved data file
+and does not affect the statistical handling of the data
+-Whether 235U was measured directly (as opposed to assumed based on 238U
+measurement)-- this is very rare and should be chosen carefully
+-What kinds of uncertainty modeling to perform (Monte Carlo and/or linear
+uncertainty propagation)
+-if Monte Carlo modeling is chosen, the user will also decide whether
+to save out the histograms produced and whether to parameterize the histograms
 """
 
 import hecalc
 from hecalc.GUI.main_GUI import launch_GUI
 
 if __name__ == '__main__':
+    # Prompt user to decide whether to run GUI
     GUI_or_CLI = input('Run [1] in command line or [2] in GUI? ')
     
+    # Run GUI is chosen
     if GUI_or_CLI == '2':
         launch_GUI()
-        
+
+    # Prompt user to decide on details of modeling
     elif GUI_or_CLI == '1':
         percent_precision = float(input('Enter desired % precision of Monte Carlo mean: ')) # user-defined relative precision, in percent
         decimals =  int(input('Enter number of decimals to output: ')) # number of decimals to report
