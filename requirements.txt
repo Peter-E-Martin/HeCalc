@@ -1,0 +1,8 @@
+numpy==1.18.1
+openpyxl==3.0.3
+pandas==1.0.3
+PyQt5==5.15.6
+scipy==1.4.1
+setuptools==41.2.0
+tabulate==0.8.9
+xlrd==1.2.0
