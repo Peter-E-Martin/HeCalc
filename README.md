@@ -20,7 +20,13 @@ There are three main methods of running HeCalc:
 
 The command line and GUI can both be triggered from the current codebase by running the hecalc_launcher.py script. These each will prompt the user for a series of decisions about the kind of data reduction to perform, the style of file to save out, and which dataset to read in.
 
-HeCalc functions both as software and a Python package. This allows a user to write their own wrapper in Python to use the functions contained within HeCalc rather than using the main integrated HeCalc program (e.g., to avoid the necessity of reconfiguring data files for the input, or for smooth integration with existing lab data reduction schemes). Details on these functions are contained below
+HeCalc functions both as an application and a Python package. This allows a user to write their own wrapper in Python to use the functions contained within HeCalc rather than using the main integrated HeCalc program (e.g., to avoid the necessity of reconfiguring data files for the input, or for smooth integration with existing lab data reduction schemes). Details on these functions are contained below.
+
+### Running the GUI
+
+Having installed HeCalc with ```pip install hecalc```, it is possible to run the GUI without having downloaded the source code directly. Simply run the commands:
+```import hecalc.GUI as gui```
+```gui.main_GUI.launch_GUI()```
 
 ## Input
 
