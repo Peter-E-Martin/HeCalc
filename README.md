@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/407311456.svg)](https://zenodo.org/badge/latestdoi/407311456)
+
 # HeCalc
 
 This is a package written in Python 3.8 to reduce (U-Th)/He data, including statistically rigorous propagation of uncertainty. 
