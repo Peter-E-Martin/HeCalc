@@ -18,7 +18,7 @@ There are three main methods of running HeCalc:
 - Graphical User Interface (GUI)
 - Through individual functions
 
-The command line and GUI can both be triggered from the current codebase by running the hecalc_launcher.py script. These each will prompt the user for a series of decisions about the kind of data reduction to perform, the style of file to save out, and which dataset to read in.
+The command line and GUI can both be triggered from the current codebase by running the hecalc_launcher.py script. These each will prompt the user for a series of decisions about the kind of data reduction to perform, the style of file to save out, and which dataset to read in. **All data uncertainties should be at the 1-sigma level.**
 
 HeCalc functions both as an application and a Python package. This allows a user to write their own wrapper in Python to use the functions contained within HeCalc rather than using the main integrated HeCalc program (e.g., to avoid the necessity of reconfiguring data files for the input, or for smooth integration with existing lab data reduction schemes). Details on these functions are contained below.
 
@@ -32,7 +32,7 @@ Having installed HeCalc with ```pip install hecalc```, it is possible to run the
 
 Data input for HeCalc can be in .xlsx, .xls, .csv, or tab-delimited .txt form. The following columns **must** be present with these exact names:
 Sample, mol 4He, mol 238U, mol 232Th, mol 147Sm,  238Ft, 235Ft, 232Ft, 147Ft
-Each column must be followed by its uncertainty value, **even if that uncertainty is 0**. A typical header column will therefore look something like this:
+Each column must be followed by its 1-sigma uncertainty value, **even if that uncertainty is 0**. A typical header column will therefore look something like this:
 
 Sample | mol 4He | ± | mol 238U | ± | mol 232Th | ± | mol 147Sm | ± | 238Ft | ± | 235Ft | ± | 232Ft | ± | 147Ft | ±
 
@@ -53,7 +53,7 @@ The user will be prompted to provide the following information for HeCalc:
 ## Output
 
 When HeCalc is fully run, it will produce an excel file with header for the user-requested precision (assuming that Monte Carlo uncertainty propagation was run) and the path for the source file. An example output file with all options selected is included in the Test directory. Each sample will then occupy a row with columns for the raw and alpha-ejection corrected values of:
-date, mean date*, linear uncertainty**, +/- 68% confidence intervals*, % skewness*, fit skewness parameter***, fit location parameter***, fit shape parameter***, and the number of Monte Carlo simulations*
+date, mean date*, 1-sigma linear uncertainty**, +/- 68% confidence intervals*, % skewness*, fit skewness parameter***, fit location parameter***, fit shape parameter***, and the number of Monte Carlo simulations*
 
 \* Only if Monte Carlo uncertainty propagation was chosen
 \** Only if Linear uncertainty propagation was chosen only
@@ -70,7 +70,7 @@ If HeCalc is installed in site-packages (i.e., is downloaded as a Python package
 |hecalc.iterated_date()|Using input data and an estimate of date, uses the Newton-Raphson method to calculate exact dates|
 |hecalc.meesters_dunai()|Generates a non-iterative date solution using the Meesters & Dunai 2005 method|
 |hecalc.get_date|Combines the two above functions to provide raw and alpha ejection-corrected dates directly from a given dataset|
-|hecalc.date_uncertainty()|Performs linear uncertainty propagation for a given dataset, assuming that 235U is calculated from the measurement of 238U|
-|hecalc.date_uncertainty_with235()|Performs the same linear uncertainty propagation but accounts for the fact that the 235U measurement is independent of the 238U measurement if it was measured directly|
-|hecalc.monte_carlo()|Runs Monte Carlo uncertainty propagation on a dataset assuming gaussian uncertainty, and outputs statistics and (if requested) the histogram and parameterized fit for the data|
+|hecalc.date_uncertainty()|Performs linear uncertainty propagation for a given dataset, assuming that 235U is calculated from the measurement of 238U. Uncertainties should be at the 1-sigma level.|
+|hecalc.date_uncertainty_with235()|Performs the same linear uncertainty propagation but accounts for the fact that the 235U measurement is independent of the 238U measurement if it was measured directly. Uncertainties should be at the 1-sigma level.|
+|hecalc.monte_carlo()|Runs Monte Carlo uncertainty propagation on a dataset assuming gaussian 1-sigma uncertainty, and outputs statistics and (if requested) the histogram and parameterized fit for the data|
 |hecalc.hecalc_main()|This is a manual function to run exactly the same set of data reduction as the software version, though users can input specific options more flexibly|
