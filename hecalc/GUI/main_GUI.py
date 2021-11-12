@@ -460,6 +460,7 @@ class WorkerClass(QObject):
                 times = []
                 for i in range(len(data)):
                     while not self.cancel:
+                        starttime = time.time()
                         # Update user of new sample being analyzed
                         self.progress.emit(100 * (len(save_out["Sample"])/len(data)))
                         self.status.emit('Now working on sample ' + str(data['Sample'].iloc[i]))
@@ -502,6 +503,7 @@ class WorkerClass(QObject):
                                                 self.parameterize,
                                                 self.decimals,
                                                 self.prec)
+                        times.append(time.time() - starttime)
                         break
                 
                 # Get the excel book to save
