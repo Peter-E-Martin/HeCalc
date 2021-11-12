@@ -33,7 +33,9 @@ Having installed HeCalc with ```pip install hecalc```, it is possible to run the
 Data input for HeCalc can be in .xlsx, .xls, .csv, or tab-delimited .txt form. The following columns **must** be present with these exact names:
 Sample, mol 4He, mol 238U, mol 232Th, mol 147Sm,  238Ft, 235Ft, 232Ft, 147Ft
 Each column must be followed by its uncertainty value, **even if that uncertainty is 0**. A typical header column will therefore look something like this:
+
 Sample | mol 4He | ± | mol 238U | ± | mol 232Th | ± | mol 147Sm | ± | 238Ft | ± | 235Ft | ± | 232Ft | ± | 147Ft | ±
+
 An example file is included in the Test directory that can serve as a template for data entry.
 
 ## User Options
@@ -69,6 +71,6 @@ If HeCalc is installed in site-packages (i.e., is downloaded as a Python package
 |hecalc.meesters_dunai()|Generates a non-iterative date solution using the Meesters & Dunai 2005 method|
 |hecalc.get_date|Combines the two above functions to provide raw and alpha ejection-corrected dates directly from a given dataset|
 |hecalc.date_uncertainty()|Performs linear uncertainty propagation for a given dataset, assuming that 235U is calculated from the measurement of 238U|
-|hecalc.date_uncertainty_with235|Performs the same linear uncertainty propagation but accounts for the fact that the 235U measurement is independent of the 238U measurement if it was measured directly|
+|hecalc.date_uncertainty_with235()|Performs the same linear uncertainty propagation but accounts for the fact that the 235U measurement is independent of the 238U measurement if it was measured directly|
 |hecalc.monte_carlo()|Runs Monte Carlo uncertainty propagation on a dataset assuming gaussian uncertainty, and outputs statistics and (if requested) the histogram and parameterized fit for the data|
 |hecalc.hecalc_main()|This is a manual function to run exactly the same set of data reduction as the software version, though users can input specific options more flexibly|
