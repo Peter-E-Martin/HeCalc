@@ -533,7 +533,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "CU TRaIL Data Reducer"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "HeCalc"))
         self.goButton.setText(_translate("MainWindow", "Go!"))
         self.cancelButton.setText(_translate("MainWindow", "Cancel"))
         self.statusMessenger.setText(_translate("MainWindow", "Status"))

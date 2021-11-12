@@ -97,7 +97,7 @@ class GUI_App(Ui_MainWindow, QObject):
     def helpButton(self):
         helpBut = QtWidgets.QMessageBox()
         helpBut.setFixedSize(1000, 10000)
-        helpBut.setWindowTitle("How to Use CU TRaIL Data Reduction")
+        helpBut.setWindowTitle("How to Use HeCalc")
         # f = open('HTMLhelpmsg.txt', "r")
         # msg = f.read()
         # f.close()
@@ -108,10 +108,10 @@ class GUI_App(Ui_MainWindow, QObject):
     # Generate an about window with version and contact info
     def aboutButton(self):
         aboutBut = QtWidgets.QMessageBox()
-        aboutBut.setWindowTitle("About CU TRaIL Data Reduction")
+        aboutBut.setWindowTitle("About HeCalc")
         aboutBut.setText(
             '''<html><head/><body><p align=\"center\" style=\"font-size:14px\">
-            v0.0 | Dec. 15 2020<br/>Contact: Peter E. Martin
+            v0.0.1 | Nov. 11 2021<br/>Contact: Peter E. Martin
             (peter.martin-2@colorado.edu)<br/>Written in Python 3.8 using
             PyQt5</p></body></html>'''
             )
