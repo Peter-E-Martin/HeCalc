@@ -53,11 +53,11 @@ The user will be prompted to provide the following information for HeCalc:
 ## Output
 
 When HeCalc is fully run, it will produce an excel file with header for the user-requested precision (assuming that Monte Carlo uncertainty propagation was run) and the path for the source file. An example output file with all options selected is included in the Test directory. Each sample will then occupy a row with columns for the raw and alpha-ejection corrected values of:
-date, mean date*, 1-sigma linear uncertainty**, +/- 68% confidence intervals*, % skewness*, fit skewness parameter***, fit location parameter***, fit shape parameter***, and the number of Monte Carlo simulations*
+date, mean date*, 1-sigma linear uncertainty**, +/- 68% confidence intervals*, % skewness*, fit a parameter***, fit u parameter***, fit s parameter***, and the number of Monte Carlo simulations*
 
 \* Only if Monte Carlo uncertainty propagation was chosen
 \** Only if Linear uncertainty propagation was chosen only
-\*** Only if parameterization was chosen
+\*** Only if parameterization was chosen. a = shape (i.e., skewness), u = location, s = scale
 
 If histogram generation was chosen with Monte Carlo uncertainty propagation, the histograms will be included in a second excel sheet labeled "Histogram Output", with raw and alpha ejection corrected histograms consisting of bin centers and the total number of samples in each bin.
 

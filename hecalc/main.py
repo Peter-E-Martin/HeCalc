@@ -357,7 +357,7 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             sample_data[u'\u00B1 232Ft'], sample_data[u'\u00B1 147Ft'],
             histogram=histograms, parameterize=parameterize
             )
-        
+                
         # Put Monte Carlo results into data framework for saving
         for ft in ['raw', 'corrected']:
             save_out['Mean '+ft+' date'].append(round(mc_results[ft+' date']['mean']/1e6,decimals))
@@ -447,8 +447,8 @@ def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, meas
     skewness (as a percent difference between the confidence intervals),
     and number of cycles necessary to reach the requested precision.
     If parameterization was requested, the fitted parameters a, u, and s
-    are included with a being skewness, u the location parameter, and
-    s the shape parameter for a Skew-normal function.
+    are included with a being shape, u the location parameter, and
+    s the scale parameter for a Skew-normal function.
     If histograms are produced, these will be saved in a second excel
     sheet with the both the raw and corrected histograms given with
     bin centers (in units of Ma) and the absolute number of Monte Carlo
