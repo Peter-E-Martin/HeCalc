@@ -184,7 +184,7 @@ def monte_carlo(mc_number, He, He_s=0,
     # of the randomly generated data
     MonteCarlo_t = get_date(He, U238, U235, Th232, Sm147,
                             Ft238, Ft235, Ft232, Ft147)
-    
+        
     # Create a dictionary to save results to
     mc_results = {'raw date': {},
                   'corrected date': {}}

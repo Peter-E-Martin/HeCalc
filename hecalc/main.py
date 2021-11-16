@@ -328,6 +328,7 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         save_out['Linear corrected uncertainty'].append(round(linear_uncertainty['corr unc']/1e6,decimals))
     
     if monteCarlo:
+        #TODO identify nans in the previously generated data and skip the MC portion
         # Estimate the number of cycles needed to reach the requested precision
         s_est = linear_uncertainty['raw unc']
         mean_est = nominal_t['corrected date']
@@ -347,6 +348,8 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             U235_s = sample_data[u'\u00B1 235U']
         
         # Call the monte carlo module
+        #TODO recognize if the monte carlo has too many samples removed for precision level
+        #TODO recognize nans in mc results and handle accordingly
         mc_results = monte_carlo(
             mc_number, sample_data['4He'], sample_data[u'\u00B1 4He'],
             sample_data['238U'], U235, sample_data['232Th'], sample_data['147Sm'],

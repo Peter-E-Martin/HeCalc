@@ -107,32 +107,38 @@ def iterated_date(He, t_guess,
             t_guess = np.array([t_guess])
         # create list of current and previous time (with initial
         # value of 0) to track amount of change between iterations
-        times = [np.zeros(len(t_guess)), t_guess]
+        times = [np.zeros(len(t_guess)), np.zeros(len(t_guess)), t_guess]
         n = 0
         ignores = []
         # restricting to n<100 is really just a safeguard. In practice, most iterated
         # dates should require <10 cycles to calculate
-        while np.nanmean(np.delete(abs(times[1]-times[0]),ignores)) > 1 and n<100:
+        while np.nanmean(np.delete(abs(times[2]-times[1]),ignores)) > 1 and n<100:
             n+=1
             times[0] = times[1]
-            f_t = (8*Ft238*U238 * (np.exp(times[1]*l_U238) - 1) +
-                   7*Ft235*U235 * (np.exp(times[1]*l_U235) - 1) +
-                   6*Ft232*Th232 * (np.exp(times[1]*l_Th232) - 1) +
-                   Ft147*Sm147 * (np.e**(times[1]*l_Sm147) - 1))-He
-            f_t_prime = (8*Ft238*l_U238*U238*np.exp(times[1]*l_U238) +
-                         7*Ft235*l_U235*U235*np.exp(times[1]*l_U235) +
-                         6*Ft232*l_Th232*Th232*np.exp(times[1]*l_Th232) +
-                         Ft147*l_Sm147*Sm147*np.exp(times[1]*l_Sm147))
-            new_date = times[1] - f_t/f_t_prime
-            times[1] = new_date
+            times[1] = times[2]
+            f_t = (8*Ft238*U238 * (np.exp(times[2]*l_U238) - 1) +
+                   7*Ft235*U235 * (np.exp(times[2]*l_U235) - 1) +
+                   6*Ft232*Th232 * (np.exp(times[2]*l_Th232) - 1) +
+                   Ft147*Sm147 * (np.e**(times[2]*l_Sm147) - 1))-He
+            f_t_prime = (8*Ft238*l_U238*U238*np.exp(times[2]*l_U238) +
+                         7*Ft235*l_U235*U235*np.exp(times[2]*l_U235) +
+                         6*Ft232*l_Th232*Th232*np.exp(times[2]*l_Th232) +
+                         Ft147*l_Sm147*Sm147*np.exp(times[2]*l_Sm147))
+            new_date = times[2] - f_t/f_t_prime
+            times[2] = new_date
             # give the method three cycles to converge, and then stop evaluating
-            # samples that aren't converging, defined as changes of >0.1% of
-            # value for each cycle after 3 cycles
+            # samples that aren't converging, defined as reversal of convergence
+            # direction after three cycles, constrained to changes of >1 year to
+            # avoid floating point errors
             if n>3:
-                rats = abs(times[1]/times[0]-1)
-                ignores = np.where(rats>0.001)[0]
-    
-        final_date = np.delete(times[1], ignores)
+                nonconv = (times[1]-times[2])/(times[0]-times[1])
+                new_times = times[2]-times[1]
+                new_ignores = np.where((nonconv<0) & (abs(new_times)>1))[0]
+                for i in new_ignores:
+                    if i not in ignores:
+                        ignores.append(i)
+                
+        final_date = np.delete(times[2], ignores)
         final_date = final_date[~np.isnan(final_date)]
         final_date = final_date[~np.isinf(final_date)]
         # If no dates converged, return NaN
