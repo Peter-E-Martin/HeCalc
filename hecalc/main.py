@@ -327,10 +327,13 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         save_out['Linear raw uncertainty'].append(round(linear_uncertainty['raw unc']/1e6,decimals))
         save_out['Linear corrected uncertainty'].append(round(linear_uncertainty['corr unc']/1e6,decimals))
     
+    #TODO set that If data don't result in valid date, skip Monte Carlo simulation
+    # if any(np.isnan(save_out[n] for n in save_out)):
+    #     monteCarlo = False
+    
     if monteCarlo:
-        #TODO identify nans in the previously generated data and skip the MC portion
         # Estimate the number of cycles needed to reach the requested precision
-        s_est = linear_uncertainty['raw unc']
+        s_est = linear_uncertainty['corr unc']
         mean_est = nominal_t['corrected date']
         mc_number = s_est**2/(precision*mean_est)**2
         if mc_number < 5:
@@ -512,7 +515,7 @@ def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, meas
             data['Sample'].iloc[i] = re.sub('[^\w\-_]', '_', data['Sample'].iloc[i])
         
         # Get the individual sample data as a dictionary
-        sample_data = data.loc[[i]].to_dict(orient='record')[0]
+        sample_data = data.loc[[i]].to_dict(orient='records')[0]
         
         save_out = _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                                 histograms, parameterize, decimals, precision)
