@@ -605,13 +605,11 @@ class WorkerClass(QObject):
                               'Linear raw uncertainty', 'Linear\nraw\n'+u'\u00B1',
                               ' +68% CI raw', '+68%\nCI\nraw',
                               ' -68% CI raw', '-68%\nCI\nraw',
-                              '% Skewness of raw distribution', '% raw\nskew',
                               'Corrected date', 'Corr.\ndate',
                               'Mean corrected date', 'Mean\ncorrected\ndate',
                               'Linear corrected uncertainty', 'Linear\ncorr.\n'+u'\u00B1',
                               ' +68% CI corrected', '+68%\nCI\ncorr.',
-                              ' -68% CI corrected', '-68%\nCI\ncorr.',
-                              '% Skewness of corrected distribution', '% corr.\nskew']
+                              ' -68% CI corrected', '-68%\nCI\ncorr.']
                 for i in range(0,len(key_change),2):
                     if key_change[i] in output.keys():
                         output[key_change[i+1]] = output.pop(key_change[i])

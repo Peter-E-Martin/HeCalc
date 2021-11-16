@@ -192,12 +192,12 @@ def monte_carlo(mc_number, He, He_s=0,
     for t in ['raw date', 'corrected date']:
         mean = np.mean(MonteCarlo_t[t])
         CIs = np.percentile(MonteCarlo_t[t], [15.865, 84.135])
-        CI_low = mean-CIs[0]
-        CI_high = CIs[1]-mean
+        # CI_low = mean-CIs[0]
+        # CI_high = CIs[1]-mean
         mc_results[t]['mean'] = mean
-        mc_results[t]['+68% CI'] = CI_high
-        mc_results[t]['-68% CI'] = CI_low
-        mc_results[t]['% Skew'] = (((CI_high/CI_low)-1)*100)
+        mc_results[t]['+68% CI'] = CIs[1]
+        mc_results[t]['-68% CI'] = CIs[0]
+        # mc_results[t]['% Skew'] = (((CI_high/CI_low)-1)*100)
         if histogram:
             histogram_out = make_histogram(MonteCarlo_t[t], parameterize)
             mc_results[t]['histogram'] = histogram_out['histogram']

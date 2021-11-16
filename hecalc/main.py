@@ -50,7 +50,7 @@ The column headers for the output include sample name, time to run, and
 corrected and uncorrected dates at a minimum. If linear uncertainty
 propagation is requested, 1-s uncertainty columns are added.
 If Monte Carlo uncertainty propagation is requested, +/- 68% confidence
-intervals are added along with % skew.
+intervals are added.
 '''
 
 import pandas as pd
@@ -71,13 +71,11 @@ def _get_cols(linear, monteCarlo, parameterize):
                     'Linear raw uncertainty',
                     ' +68% CI raw',
                     ' -68% CI raw',
-                    '% Skewness of raw distribution',
                     'Corrected date',
                     'Mean corrected date',
                     'Linear corrected uncertainty',
                     ' +68% CI corrected',
                     ' -68% CI corrected',
-                    '% Skewness of corrected distribution',
                     'Number of Monte Carlo simulations']
     if monteCarlo and not linear:
         save_columns = ['Sample',
@@ -85,12 +83,10 @@ def _get_cols(linear, monteCarlo, parameterize):
                         'Mean raw date',
                         ' +68% CI raw',
                         ' -68% CI raw',
-                        '% Skewness of raw distribution',
                         'Corrected date',
                         'Mean corrected date',
                         ' +68% CI corrected',
                         ' -68% CI corrected',
-                        '% Skewness of corrected distribution',
                         'Number of Monte Carlo simulations']
     elif linear and not monteCarlo:
         save_columns = ['Sample',
@@ -105,10 +101,10 @@ def _get_cols(linear, monteCarlo, parameterize):
     # If parameterization is chosen, add the relevant columns
     # at the end of the raw and corrected data output
     if parameterize:
-        ins_idx = save_columns.index('% Skewness of raw distribution')
+        ins_idx = save_columns.index(' -68% CI raw')
         add_cols = ['raw fit a','raw fit u','raw fit s']
         save_columns = save_columns[:ins_idx+1]+add_cols+save_columns[ins_idx+1:]
-        ins_idx = save_columns.index('% Skewness of corrected distribution')
+        ins_idx = save_columns.index(' -68% CI corrected')
         add_cols = ['corrected fit a','corrected fit u','corrected fit s']
         save_columns = save_columns[:ins_idx+1]+add_cols+save_columns[ins_idx+1:]
     return save_columns
@@ -247,8 +243,6 @@ def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs
     for cell in output[colHead_row]:
         cell.font = styles.Font(bold=True)
         cell.alignment = styles.Alignment(wrapText=True)
-        if '% Skewness' in cell.value:
-            output.column_dimensions[utils.get_column_letter(cell.column)].width = 20
         if 'Linear' in cell.value:
             output.column_dimensions[utils.get_column_letter(cell.column)].width = 15
         if 'Corrected date' in cell.value:
@@ -369,7 +363,6 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             save_out['Mean '+ft+' date'].append(round(mc_results[ft+' date']['mean']/1e6,decimals))
             save_out[' +68% CI '+ft].append(round(mc_results[ft+' date']['+68% CI']/1e6,decimals))
             save_out[' -68% CI '+ft].append(round(mc_results[ft+' date']['-68% CI']/1e6,decimals))
-            save_out['% Skewness of '+ft+' distribution'].append(round(mc_results[ft+' date']['% Skew'],decimals))
             if histograms:
                 mc_results[ft+' date']['histogram'][0] = np.around(mc_results[ft+' date']['histogram'][0]/1e6,decimals)
                 mc_results[ft+' date']['histogram'][1] = mc_results[ft+' date']['histogram'][1]
@@ -450,7 +443,6 @@ def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, meas
     For all calculations, the sample name and date are returned
     If linear is chosen, the 1-sigma uncertainty is included
     If montecarlo is chosen, the 68% confidence intervals, mean date,
-    skewness (as a percent difference between the confidence intervals),
     and number of cycles necessary to reach the requested precision.
     If parameterization was requested, the fitted parameters a, u, and s
     are included with a being shape, u the location parameter, and
