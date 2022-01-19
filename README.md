@@ -8,7 +8,7 @@ This is a package written in Python 3.8 to reduce (U-Th)/He data, including stat
 
 HeCalc is available through the python package index (PyPI), so you can install it using ```pip install hecalc```
 
-HeCalc is also available as an executable which will run a self-contained Windows application (Mac version coming soon!) that does not require the use of Python. The executable is available with each HeCalc release, which can be found on the right-hand side of the GitHub repository page by clicking the "tags" link under "Releases". Alternatively, the most recent download is available by [clicking here](https://github.com/Peter-E-Martin/HeCalc/releases/download/v0.1.1-alpha/HeCalc.exe).
+HeCalc is also available as an executable which will run a self-contained Windows application (Mac version coming soon!) that does not require the use of Python. The executable is available with each HeCalc release, which can be found on the right-hand side of the GitHub repository page by clicking "Releases". Alternatively, the most recent download is available by [clicking here](https://github.com/Peter-E-Martin/HeCalc/releases/download/v0.1.1-alpha/HeCalc.exe).
 
 Alternatively, some functionality is provided directly by the python scripts hosted here on GitHub, so adding them directly to a data reduction workflow should be straightforward (as long as the dependencies found in pyproject.toml are met!).
 
