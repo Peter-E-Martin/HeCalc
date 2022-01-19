@@ -1,19 +1,22 @@
 [tool.poetry]
 name = "hecalc"
-version = "0.1.1"
+version = "0.1.2"
 description = "A tool for performing (U-Th)/He data reduction and uncertainty propagation"
 authors = ["Peter E. Martin <peter.martin-2@colorado.edu>"]
 
 [tool.poetry.dependencies]
+# Mandatory dependencies
 python = "^3.8"
 numpy = ">=1.18.1"
 openpyxl = ">=3.0.3"
 pandas = ">=1.0.3"
-PyQt5 = ">=5.15.6"
 scipy = ">=1.4.1"
 setuptools = ">=41.2.0"
-tabulate = ">=0.8.9"
-xlrd = ">=1.2.0"
+
+# Optional dependencies for GUI
+PyQt5 = {version = "^5.15.6", extras = ["GUI"]}
+tabulate = {version = "^0.8.9", extras = ["GUI"]}
+xlrd = {version = "^1.2.0", extras = ["GUI"]}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
