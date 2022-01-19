@@ -26,9 +26,11 @@ HeCalc functions both as an application and a Python package. This allows a user
 
 ### Running the GUI
 
-Having installed HeCalc with ```pip install hecalc```, it is possible to run the GUI without having downloaded the source code directly. Simply run the commands:
+Having installed HeCalc with ```pip install hecalc```, it is possible to run the GUI without having downloaded the executable. Simply run the commands:
 ```import hecalc.GUI as gui```
 ```gui.main_GUI.launch_GUI()```
+
+Alternatively, an executable version of the GUI is available with each release. For those interested only in running the GUI, simply download the HeCalc.exe file from the most recent release. This will allow you to run HeCalc without any knowledge of Python (or even having Python installed on your computer).
 
 ## Input
 
