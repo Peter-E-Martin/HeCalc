@@ -12,7 +12,7 @@ HeCalc is also available as an executable which will run a self-contained Window
 
 Alternatively, some functionality is provided directly by the python scripts hosted here on GitHub, so adding them directly to a data reduction workflow should be straightforward (as long as the dependencies found in pyproject.toml are met!).
 
-***WARNING***: HeCalc is not currently compatible with Anaconda. As always, avoid using ```pip install``` commands in an Anaconda environment. This will result in the PyQt5 version used by Anaconda being overwritten and will be very hard to dig out. Anaconda compatibility wll hopefully be available in the Beta verions of HeCalc.
+***WARNING***: HeCalc is not currently compatible with Anaconda. As always, avoid using ```pip install``` commands in an Anaconda environment. This will result in the PyQt5 version used by Anaconda being overwritten and will be very hard to dig out. Anaconda compatibility will hopefully be available in the Beta verions of HeCalc.
 
 ## Running HeCalc
 
