@@ -215,7 +215,7 @@ def meesters_dunai(He,
     # Calculate individual production values
     p238 = 8*l_U238*U238*Ft238
     p235 = 7*l_U235*U235*Ft235
-    p232 = 6*l_Th232*Th232*Ft235
+    p232 = 6*l_Th232*Th232*Ft232
     p147 = l_Sm147*Sm147*Ft147
     # Generate total and weighted mean production
     p_tot = [p238, p235, p232, p147]
