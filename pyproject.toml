@@ -14,9 +14,12 @@ scipy = ">=1.4.1"
 setuptools = ">=41.2.0"
 
 # Optional dependencies for GUI
-PyQt5 = {version = "^5.15.6", extras = ["GUI"]}
-tabulate = {version = "^0.8.9", extras = ["GUI"]}
-xlrd = {version = "^1.2.0", extras = ["GUI"]}
+PyQt5 = {version = "^5.15.6", optional = true}
+tabulate = {version = "^0.8.9", optional = true}
+xlrd = {version = "^1.2.0", optional = true}
+
+[tool.poetry.extras]
+gui = ["PyQt5", "tabulate", "xlrd"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
