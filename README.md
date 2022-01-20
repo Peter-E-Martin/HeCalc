@@ -2,7 +2,7 @@
 
 # HeCalc
 
-This is a package written in Python 3.8 to reduce (U-Th)/He data, including statistically rigorous propagation of uncertainty. 
+This is a package written in Python 3.8 to reduce (U-Th)/He data, including statistically rigorous propagation of uncertainty. All uncertainties are input and output at the 1-sigma level.
 
 ## Installation
 
