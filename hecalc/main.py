@@ -175,6 +175,7 @@ def _load_file(file, measured_U235, sheet):
     data.columns = final_cols
     short_names = {name:name.replace('mol ','') for name in data.columns if 'mol ' in name}
     data = data.rename(columns=short_names)
+    data.dropna(axis=0, how = 'all', inplace=True)
     
     return data
 
@@ -314,9 +315,13 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                          sample_data['232Th'], sample_data['147Sm'],
                          sample_data['238Ft'], sample_data['235Ft'],
                          sample_data['232Ft'], sample_data['147Ft'])
-    # Reject MC run if nominal date produces NaN
+    # Reject MC run if nominal date produces NaN or impossibly
+    # old dates, as dates >1e10 yrs requires a long time to run
+    # and is extremely unlikely to be a legitimate date
     for t in nominal_t.values():
-        if np.isnan(t):
+        if t > 1e10:
+            reject = True
+        elif np.isnan(t):
             reject = True
     save_out['Raw date'].append(round(nominal_t['raw date']/1e6, decimals))
     save_out['Corrected date'].append(round(nominal_t['corrected date']/1e6, decimals))
@@ -394,7 +399,8 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                 reject = True
     if reject:
         for ft in ['raw', 'corrected']:
-            save_out['Number of Monte Carlo simulations'].append('NaN')
+            if ft == 'corrected':
+                save_out['Number of Monte Carlo simulations'].append('NaN')
             save_out['Mean '+ft+' date'].append('NaN')
             save_out[' +68% CI '+ft].append('NaN')
             save_out[' -68% CI '+ft].append('NaN')
