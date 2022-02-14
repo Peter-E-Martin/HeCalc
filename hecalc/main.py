@@ -327,6 +327,7 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
     
     if monteCarlo:
         # Estimate the number of cycles needed to reach the requested precision
+        # TODO implement some kind of safeguard against huge mc_number results for very uncertain data
         s_est = linear_uncertainty['corr unc']
         mean_est = nominal_t['corrected date']
         mc_number = s_est**2/(precision*mean_est)**2
@@ -345,8 +346,6 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             U235_s = sample_data[u'\u00B1 235U']
         
         # Call the monte carlo module
-        #TODO recognize if the monte carlo has too many samples removed for precision level
-        #TODO recognize nans in mc results and handle accordingly
         mc_results = monte_carlo(
             mc_number, sample_data['4He'], sample_data[u'\u00B1 4He'],
             sample_data['238U'], U235, sample_data['232Th'], sample_data['147Sm'],
@@ -360,21 +359,32 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                 
         # Put Monte Carlo results into data framework for saving
         for ft in ['raw', 'corrected']:
-            save_out['Mean '+ft+' date'].append(round(mc_results[ft+' date']['mean']/1e6,decimals))
-            save_out[' +68% CI '+ft].append(round(mc_results[ft+' date']['+68% CI']/1e6,decimals))
-            save_out[' -68% CI '+ft].append(round(mc_results[ft+' date']['-68% CI']/1e6,decimals))
-            if histograms:
-                mc_results[ft+' date']['histogram'][0] = np.around(mc_results[ft+' date']['histogram'][0]/1e6,decimals)
-                mc_results[ft+' date']['histogram'][1] = mc_results[ft+' date']['histogram'][1]
-                save_out[ft+' histogram'].append(mc_results[ft+' date']['histogram'])
-                if parameterize:
-                    save_out[ft+' fit a'].append(mc_results[ft+' date']['a'])
-                    try:
-                        save_out[ft+' fit u'].append(round(mc_results[ft+' date']['u']/1e6,decimals))
-                        save_out[ft+' fit s'].append(round(mc_results[ft+' date']['s']/1e6,decimals))
-                    except:
-                        save_out[ft+' fit u'].append(mc_results[ft+' date']['u'])
-                        save_out[ft+' fit s'].append(mc_results[ft+' date']['s'])
+            if 1-mc_results[ft+' date']['cycles']/mc_number < precision:
+                save_out['Mean '+ft+' date'].append(round(mc_results[ft+' date']['mean']/1e6,decimals))
+                save_out[' +68% CI '+ft].append(round(mc_results[ft+' date']['+68% CI']/1e6,decimals))
+                save_out[' -68% CI '+ft].append(round(mc_results[ft+' date']['-68% CI']/1e6,decimals))
+                if histograms:
+                    mc_results[ft+' date']['histogram'][0] = np.around(mc_results[ft+' date']['histogram'][0]/1e6,decimals)
+                    mc_results[ft+' date']['histogram'][1] = mc_results[ft+' date']['histogram'][1]
+                    save_out[ft+' histogram'].append(mc_results[ft+' date']['histogram'])
+                    if parameterize:
+                        save_out[ft+' fit a'].append(mc_results[ft+' date']['a'])
+                        try:
+                            save_out[ft+' fit u'].append(round(mc_results[ft+' date']['u']/1e6,decimals))
+                            save_out[ft+' fit s'].append(round(mc_results[ft+' date']['s']/1e6,decimals))
+                        except:
+                            save_out[ft+' fit u'].append(mc_results[ft+' date']['u'])
+                            save_out[ft+' fit s'].append(mc_results[ft+' date']['s'])
+            else:
+                save_out['Mean '+ft+' date'].append('NaN')
+                save_out[' +68% CI '+ft].append('NaN')
+                save_out[' -68% CI '+ft].append('NaN')
+                if histograms:
+                    save_out[ft+' histogram'].append([np.array(['NaN']),np.array(['NaN'])])
+                    if parameterize:
+                        save_out[ft+' fit a'].append('NaN')
+                        save_out[ft+' fit u'].append('NaN')
+                        save_out[ft+' fit s'].append('NaN')
     return save_out
 
 def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, measured_U235=False,
