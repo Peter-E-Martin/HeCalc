@@ -299,8 +299,11 @@ def _linear_propagation(nominal_t, data, measured_U235):
     return {'raw unc': linear_raw_uncertainty, 'corr unc': linear_corr_uncertainty}
 
 def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
-                 histograms, parameterize, decimals, precision):
+                 histograms, parameterize, decimals, precision): 
     '''Gets all relevant data for a single samle'''
+    # set up reject variable to keep track of whether to run MC
+    reject = False
+    
     # Create the U235 data
     U235 = sample_data['238U']/137.818
     if measured_U235:
@@ -311,21 +314,32 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                          sample_data['232Th'], sample_data['147Sm'],
                          sample_data['238Ft'], sample_data['235Ft'],
                          sample_data['232Ft'], sample_data['147Ft'])
+    # Reject MC run if nominal date produces NaN
+    for t in nominal_t.values():
+        if np.isnan(t):
+            reject = True
     save_out['Raw date'].append(round(nominal_t['raw date']/1e6, decimals))
     save_out['Corrected date'].append(round(nominal_t['corrected date']/1e6, decimals))
     
     # Calls helper function _linear_propagation, which unpacks relevant
     # data and calls the correct functions for linear uncertainty propagation
     linear_uncertainty = _linear_propagation(nominal_t, sample_data, measured_U235)
+    
+    # Reject MC run if linear uncertainty produces NaN
+    for u in linear_uncertainty.values():
+        if np.isnan(u):
+            reject = True
+    
     if linear:
         save_out['Linear raw uncertainty'].append(round(linear_uncertainty['raw unc']/1e6,decimals))
         save_out['Linear corrected uncertainty'].append(round(linear_uncertainty['corr unc']/1e6,decimals))
     
-    #TODO set that If data don't result in valid date, skip Monte Carlo simulation
-    # if any(np.isnan(save_out[n] for n in save_out)):
-    #     monteCarlo = False
+    for k in sample_data:
+        if u'\u00B1' in k:
+            if sample_data[k]<0:
+                reject = True
     
-    if monteCarlo:
+    if monteCarlo and not reject:
         # Estimate the number of cycles needed to reach the requested precision
         # TODO implement some kind of safeguard against huge mc_number results for very uncertain data
         s_est = linear_uncertainty['corr unc']
@@ -335,7 +349,6 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             mc_number = 5
         else:
             mc_number = int(mc_number)
-        save_out['Number of Monte Carlo simulations'].append(mc_number)
         
         # Create U235 data for the monteCarlo function
         if not measured_U235:
@@ -360,6 +373,8 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         # Put Monte Carlo results into data framework for saving
         for ft in ['raw', 'corrected']:
             if 1-mc_results[ft+' date']['cycles']/mc_number < precision:
+                if ft == 'corrected':
+                    save_out['Number of Monte Carlo simulations'].append(mc_number)
                 save_out['Mean '+ft+' date'].append(round(mc_results[ft+' date']['mean']/1e6,decimals))
                 save_out[' +68% CI '+ft].append(round(mc_results[ft+' date']['+68% CI']/1e6,decimals))
                 save_out[' -68% CI '+ft].append(round(mc_results[ft+' date']['-68% CI']/1e6,decimals))
@@ -376,15 +391,19 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                             save_out[ft+' fit u'].append(mc_results[ft+' date']['u'])
                             save_out[ft+' fit s'].append(mc_results[ft+' date']['s'])
             else:
-                save_out['Mean '+ft+' date'].append('NaN')
-                save_out[' +68% CI '+ft].append('NaN')
-                save_out[' -68% CI '+ft].append('NaN')
-                if histograms:
-                    save_out[ft+' histogram'].append([np.array(['NaN']),np.array(['NaN'])])
-                    if parameterize:
-                        save_out[ft+' fit a'].append('NaN')
-                        save_out[ft+' fit u'].append('NaN')
-                        save_out[ft+' fit s'].append('NaN')
+                reject = True
+    if reject:
+        for ft in ['raw', 'corrected']:
+            save_out['Number of Monte Carlo simulations'].append('NaN')
+            save_out['Mean '+ft+' date'].append('NaN')
+            save_out[' +68% CI '+ft].append('NaN')
+            save_out[' -68% CI '+ft].append('NaN')
+            if histograms:
+                save_out[ft+' histogram'].append([np.array(['NaN']),np.array(['NaN'])])
+                if parameterize:
+                    save_out[ft+' fit a'].append('NaN')
+                    save_out[ft+' fit u'].append('NaN')
+                    save_out[ft+' fit s'].append('NaN')
     return save_out
 
 def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, measured_U235=False,
