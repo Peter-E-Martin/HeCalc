@@ -98,20 +98,23 @@ def iterated_date(He, t_guess,
     # based on a constant ratio to U238
     if U235 is None:
         U235 = U238/137.818
-    try:
-        # First convert ints or floats to arrays of len(1) 
-        # to accomodate array datatype
-        single_date = False
-        if type(t_guess) != np.ndarray:
-            single_date = True
-            t_guess = np.array([t_guess])
-        # create list of current and previous time (with initial
-        # value of 0) to track amount of change between iterations
-        times = [np.zeros(len(t_guess)), np.zeros(len(t_guess)), t_guess]
-        n = 0
-        ignores = []
-        # restricting to n<100 is really just a safeguard. In practice, most iterated
-        # dates should require <10 cycles to calculate
+    # First convert ints or floats to arrays of len(1) 
+    # to accomodate array datatype
+    single_date = False
+    if type(t_guess) != np.ndarray:
+        single_date = True
+        t_guess = np.array([t_guess])
+    # create list of current and previous time (with initial
+    # value of 0) to track amount of change between iterations
+    # print(t_guess)
+    times = [np.zeros(len(t_guess)), np.zeros(len(t_guess)), t_guess]
+    n = 0
+    ignores = []
+    # restricting to n<100 is really just a safeguard. In practice, most iterated
+    # dates should require <10 cycles to calculate
+    # suppress NaN warnings because NaNs are tracked independently and removed.
+    # Allowing NaNs results in much better performance
+    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):
         while np.nanmean(np.delete(abs(times[2]-times[1]),ignores)) > 1 and n<100:
             n+=1
             times[0] = times[1]
@@ -129,27 +132,32 @@ def iterated_date(He, t_guess,
             # give the method three cycles to converge, and then stop evaluating
             # samples that aren't converging, defined as reversal of convergence
             # direction after three cycles, constrained to changes of >1 year to
-            # avoid floating point errors
+            # avoid floating point errors. The with statement here prevents a divide
+            # by zero warning, which should arise if the code is working properly
+            # (i.e., when there is no change along the array, many elements will be subtracted
+            # from themselves and divided)
             if n>3:
+                # print(times)
                 nonconv = (times[1]-times[2])/(times[0]-times[1])
                 new_times = times[2]-times[1]
                 new_ignores = np.where((nonconv<0) & (abs(new_times)>1))[0]
                 for i in new_ignores:
                     if i not in ignores:
                         ignores.append(i)
-                
-        final_date = np.delete(times[2], ignores)
-        final_date = final_date[~np.isnan(final_date)]
-        final_date = final_date[~np.isinf(final_date)]
-        # If no dates converged, return NaN
-        if len(final_date) == 0:
-            return np.nan
-        # Convert back to float if array was not passed originally
-        if single_date:
-            final_date = float(final_date[0])
-        return final_date
-    except:
+    
+    # remove non-converged, NaN, and INF values
+    final_date = np.delete(times[2], ignores)
+    final_date = final_date[~np.isnan(final_date)]
+    final_date = final_date[~np.isinf(final_date)]
+    
+    # If no dates converged, return NaN
+    if len(final_date) == 0:
         return np.nan
+    # Convert back to float if array was not passed originally
+    if single_date:
+        final_date = float(final_date[0])
+    # print(final_date)
+    return final_date
 
 def meesters_dunai(He,
                    U238=0, U235=None, Th232=0, Sm147=0,
@@ -221,12 +229,14 @@ def meesters_dunai(He,
     p_tot = [p238, p235, p232, p147]
     P = p238 + p235 + p232 + p147
     l_wm = sum([l_tot[i]*p_tot[i]/P for i in range(len(p_tot))])
-    try:
-        return 1/l_wm*np.log((l_wm/P)*He+1)
-    # If the Meesters and Dunai method fails, use
-    # a linearized version of the age equaiton
-    except ValueError:
-        return He/sum(p_tot)
+    # Get the Meesters and Dunai estimate
+    # With highly uncertain nuclide values, negative
+    # log values will sometimes arise. Suppress the
+    # warning output and allow the NaN values to carry
+    # through and be removed in the final steps
+    with np.errstate(invalid='ignore'):
+        MD_date = 1/l_wm*np.log((l_wm/P)*He+1)
+    return MD_date
         
 # Function to get age given He, radioisotopes, and Fts
 def get_date(He,
