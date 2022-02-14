@@ -23,7 +23,6 @@ histograms and parameterize those histograms if a user so desires.
 """
 
 from scipy.stats import skewnorm as sk
-from scipy.optimize import curve_fit
 import numpy as np
 from .date_calculation import get_date
 
@@ -59,20 +58,20 @@ def make_histogram(mc, parameterize):
     
     # Get stats for skewnormal function if the user called for parameterization
     if parameterize:
-        mean = np.mean(mc)
-        med = np.median(mc)
-        s = np.std(mc)
-        skewness = 3*(mean-med)/s
-        a = skewness*10
-        try:
-            p0 = [a, mean, s]
-            c, cov = curve_fit(sk.pdf, histo[0], histo[1], p0)
-        except:
-            print('parameterization unsuccessful, returning only histogram')
-            return {'histogram': histo,
-                    'fit distribution': [None, None, None]}
+        # Subsample Monte Carlo results if lots of simulations were run.
+        # skewnorm.fit is very slow with large samples, and the accuracy of
+        # the fit is perfectly acceptable with 1e5 samples
+        if len(mc) > int(1e5):
+            sample = np.random.choice(mc, int(1e5), replace = False)
+        else:
+            sample = mc
+        a, u, s = sk.fit(sample)
+        # except:
+        #     print('parameterization unsuccessful, returning only histogram')
+        #     return {'histogram': histo,
+        #             'fit distribution': [None, None, None]}
         return {'histogram': histo,
-                'fit distribution': [c[0],c[1],c[2]]}
+                'fit distribution': [a, u, s]}
     return {'histogram': histo}
 
 def monte_carlo(mc_number, He, He_s=0,
@@ -157,11 +156,12 @@ def monte_carlo(mc_number, He, He_s=0,
     Returns
     -------
     Produces a dictionary with entries for the raw and alpha-ejection corrected
-    results. Each entry is a dictionary with mean, +/- 68% CI, and % skew. If
-    histogram is true, the histogram for each is returned as a list of the bin
-    centers and a list of the number of samples within the bin. The parameters
-    are associated with the key "fit distribution", and are a list of the three
-    parameters (skewness, location, scale) to calculate a skew-normal distribution
+    results. Each entry is a dictionary with mean, +/- 68% CI, and the number of
+    successful cycles. If histogram is true, the histogram for each is returned 
+    as a list of the bin centers and a list of the number of samples within the 
+    bin. The parameters are associated with the key "fit distribution", and are 
+    a list of the three parameters (skewness, location, scale) to calculate a 
+    skew-normal distribution
     '''
     # Generate arrays of each datum using its uncertainty
     # This is strictly gaussian for now, but could include
@@ -192,12 +192,13 @@ def monte_carlo(mc_number, He, He_s=0,
     for t in ['raw date', 'corrected date']:
         mean = np.mean(MonteCarlo_t[t])
         CIs = np.percentile(MonteCarlo_t[t], [15.865, 84.135])
-        # CI_low = mean-CIs[0]
-        # CI_high = CIs[1]-mean
         mc_results[t]['mean'] = mean
         mc_results[t]['+68% CI'] = CIs[1]
         mc_results[t]['-68% CI'] = CIs[0]
-        # mc_results[t]['% Skew'] = (((CI_high/CI_low)-1)*100)
+        # Report how many of the Monte Carlo simulations converged to
+        # an age. For highly uncertain input data, this may be significantly
+        # lower than the number of requested cycles.
+        mc_results[t]['cycles'] = len(MonteCarlo_t[t])
         if histogram:
             histogram_out = make_histogram(MonteCarlo_t[t], parameterize)
             mc_results[t]['histogram'] = histogram_out['histogram']
