@@ -1,3 +1,4 @@
+
 [![DOI](https://zenodo.org/badge/407311456.svg)](https://zenodo.org/badge/latestdoi/407311456)
 
 # HeCalc
@@ -42,7 +43,11 @@ Each column must be followed by its 1-sigma uncertainty value, **even if that un
 
 Sample | mol 4He | ± | mol 238U | ± | mol 232Th | ± | mol 147Sm | ± | 238Ft | ± | 235Ft | ± | 232Ft | ± | 147Ft | ±
 
-An example file is included in the Test directory that can serve as a template for data entry.
+Correlated uncertainties in the radionuclides and Ft values can be accommodated by HeCalc. By default, uncertainties will be treated as independent. However, correlation coefficients for each known correlation can be included by adding columns with the naming convention "r value1-value2". For example, columns for known correlations between 238U and 232Th, 238Ft and 235Ft, and 238Ft and 232Ft would look like:
+
+r 238U-232Th | r 238Ft-235Ft | r 238Ft-232Ft
+
+Example files are included in the Test directory that can serve as template for data entry. These in includes options with both correlated and uncorrelated uncertainty.
 
 ## User Options
 

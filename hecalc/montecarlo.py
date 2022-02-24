@@ -79,6 +79,10 @@ def monte_carlo(mc_number, He, He_s=0,
                 Ft238=1, Ft235=1, Ft232=1, Ft147=1,
                 U238_s=0, U235_s=None, Th232_s=0, Sm147_s=0,
                 Ft238_s=0, Ft235_s=0, Ft232_s=0, Ft147_s=0,
+                U238_U235_v=0, U238_Th232_v=0, U238_Sm147_v=0,
+                U235_Th232_v=0, U235_Sm147_v=0, Th232_Sm147_v=0,
+                Ft238_Ft235_v=0, Ft238_Ft232_v=0, Ft238_Ft147_v=0,
+                Ft235_Ft232_v=0, Ft235_Ft147_v=0, Ft232_Ft147_v=0,
                 histogram=False, parameterize=False):
     '''
     Performs Monte Carlo modeling for a (U-Th)/He dataset. Note that
@@ -146,6 +150,42 @@ def monte_carlo(mc_number, He, He_s=0,
     Ft147_s : float, optional
         The uncertainty in Ft147
         
+    U238_U235_v : float, optional
+        The covariance between U238 and U235
+    
+    U238_Th232_v : float, optional
+        The covariance between U238 and Th232
+    
+    U238_Sm147_v : float, optional
+        The covariance between U238 and Sm147
+    
+    U235_Th232_v : float, optional
+        The covariance between U235 and Th232
+    
+    U235_Sm147_v : float, optional
+        The covariance between U235 and Sm147
+    
+    Th232_Sm147_v : float, optional
+        The covariance between Th232 and Sm147
+    
+    Ft238_Ft235_v : float, optional
+        The covariance between Ft238 and Ft235
+    
+    Ft238_Ft232_v : float, optional
+        The covariance between Ft238 and Ft232
+    
+    Ft238_Ft147_v : float, optional
+        The covariance between Ft238 and Ft147
+    
+    Ft235_Ft232_v : float, optional
+        The covariance between Ft235 and Ft232
+    
+    Ft235_Ft147_v : float, optional
+        The covariance between Ft235 and Ft147
+    
+    Ft232_Ft147_v : float, optional
+        The covariance between Ft232 and Ft147
+        
     histogram : bool, optional
         Whether to generate a histogram for the Monte Carlo results
         
@@ -163,22 +203,44 @@ def monte_carlo(mc_number, He, He_s=0,
     a list of the three parameters (skewness, location, scale) to calculate a 
     skew-normal distribution
     '''
-    # Generate arrays of each datum using its uncertainty
-    # This is strictly gaussian for now, but could include
-    # additional distributions or even arbitrary distributions
-    # in the future.
+    # Helium is always univariate, so generate normal sample here
     He = np.random.normal(He, He_s, mc_number)
-    U238 = np.random.normal(U238, U238_s, mc_number)
+    
+    # Generate radionuclides covariance matrix (3x3 in most cases, 4x4 for U235 measured)
+    # and corresponding multivariate normal arrays
     if U235 == None:
+        rad_means = [U238, Th232, Sm147]
+        rad_cov = [[U238_s**2, U238_Th232_v, U238_Sm147_v],
+                   [U238_Th232_v, Th232_s**2, Th232_Sm147_v],
+                   [U238_Sm147_v, Th232_Sm147_v, Sm147_s**2]]
+        rads = np.random.multivariate_normal(rad_means, rad_cov, mc_number).T
+        U238 = rads[0]
+        Th232 = rads[1]
+        Sm147 = rads[2]
         U235 = U238/137.818
     else:
-        U235 = np.random.normal(U235, U235_s, mc_number)
-    Th232 = np.random.normal(Th232, Th232_s, mc_number)
-    Sm147 = np.random.normal(Sm147, Sm147_s, mc_number)
-    Ft238 = np.random.normal(Ft238, Ft238_s, mc_number)
-    Ft235 = np.random.normal(Ft235, Ft235_s, mc_number)
-    Ft232 = np.random.normal(Ft232, Ft232_s, mc_number)
-    Ft147 = np.random.normal(Ft147, Ft147_s, mc_number)
+        rad_means = [U238, U235, Th232, Sm147]
+        rad_cov = [[U238_s**2, U238_U235_v, U238_Th232_v, U238_Sm147_v],
+                   [U238_U235_v, U235_s**2, U235_Th232_v, U235_Sm147_v],
+                   [U238_Th232_v, U235_Th232_v, Th232_s**2, Th232_Sm147_v],
+                   [U238_Sm147_v, U235_Sm147_v, Th232_Sm147_v, Sm147_s**2]]
+        rads = np.random.multivariate_normal(rad_means, rad_cov, mc_number).T
+        U238 = rads[0]
+        U235 = rads[1]
+        Th232 = rads[2]
+        Sm147 = rads[3]
+    
+    # Generate Ft covariance matrix and multivariate normal arrays
+    Ft_means = [Ft238, Ft235, Ft232, Ft147]
+    Ft_covs = [[Ft238_s**2, Ft238_Ft235_v, Ft238_Ft232_v, Ft238_Ft147_v],
+               [Ft238_Ft235_v, Ft235_s**2, Ft235_Ft232_v, Ft235_Ft147_v],
+               [Ft238_Ft232_v, Ft235_Ft232_v, Ft232_s**2, Ft232_Ft147_v],
+               [Ft238_Ft147_v, Ft235_Ft147_v,Ft232_Ft147_v, Ft147_s**2]]
+    Fts = np.random.multivariate_normal(Ft_means, Ft_covs, mc_number).T
+    Ft238 = Fts[0]
+    Ft235 = Fts[1]
+    Ft232 = Fts[2]
+    Ft147 = Fts[3]
     
     # Call the get_date function to calculate a date for each
     # of the randomly generated data

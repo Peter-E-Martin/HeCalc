@@ -142,7 +142,10 @@ def date_uncertainty(He, t, He_s=0,
                      U238=0, U235=None, Th232=0, Sm147=0,
                      Ft238=1, Ft235=1, Ft232=1, Ft147=1,
                      U238_s=0, Th232_s=0, Sm147_s=0,
-                     Ft238_s=0, Ft235_s=0, Ft232_s=0, Ft147_s=0):
+                     Ft238_s=0, Ft235_s=0, Ft232_s=0, Ft147_s=0,
+                     U238_Th232_v=0, U238_Sm147_v=0, Th232_Sm147_v=0,
+                     Ft238_Ft235_v=0, Ft238_Ft232_v=0, Ft238_Ft147_v=0,
+                     Ft235_Ft232_v=0, Ft235_Ft147_v=0, Ft232_Ft147_v=0):
     '''
     Returns symmetrical uncertainty via linear uncertainty propagation
     for a given date with uncertainty in He, radionuclides, and/or Ft values.
@@ -222,6 +225,33 @@ def date_uncertainty(He, t, He_s=0,
         
     Ft147_s : float or array-like, optional
         The uncertainty in Ft147
+    
+    U238_Th232_v : float or array-like, optional
+        The covariance between U238 and Th232
+    
+    U238_Sm147_v : float or array-like, optional
+        The covariance between U238 and Sm147
+    
+    Th232_Sm147_v : float or array-like, optional
+        The covariance between Th232 and Sm147
+    
+    Ft238_Ft235_v : float or array-like, optional
+        The covariance between Ft238 and Ft235
+    
+    Ft238_Ft232_v : float or array-like, optional
+        The covariance between Ft238 and Ft232
+    
+    Ft238_Ft147_v : float or array-like, optional
+        The covariance between Ft238 and Ft147
+    
+    Ft235_Ft232_v : float or array-like, optional
+        The covariance between Ft235 and Ft232
+    
+    Ft235_Ft147_v : float or array-like, optional
+        The covariance between Ft235 and Ft147
+    
+    Ft232_Ft147_v : float or array-like, optional
+        The covariance between Ft232 and Ft147
         
     Returns
     -------
@@ -229,38 +259,60 @@ def date_uncertainty(He, t, He_s=0,
     '''
     if U235 is None:
         U235 = U238/137.818
+    dHe = _He_prime(U238, U235, Th232, Sm147,
+                    Ft238, Ft235, Ft232, Ft147,
+                    He, t)
+    dU238_no235 = _U238_prime_noU235(U238, U235, Th232, Sm147,
+                                       Ft238, Ft235, Ft232, Ft147,
+                                       He, t)
+    dTh232 = _Th232_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dSm147 = _Sm147_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dFt238 = _Ft238_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dFt235 = _Ft235_prime(U238, U235, Th232, Sm147,
+                  Ft238, Ft235, Ft232, Ft147,
+                  He, t)
+    dFt232 = _Ft232_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dFt147 = _Ft147_prime(U238, U235, Th232, Sm147,
+                  Ft238, Ft235, Ft232, Ft147,
+                  He, t)
+    
     return (
-        (_He_prime(U238, U235, Th232, Sm147,
-                   Ft238, Ft235, Ft232, Ft147,
-                   He, t)*He_s)**2+
-        (_U238_prime_noU235(U238, U235, Th232, Sm147,
-                            Ft238, Ft235, Ft232, Ft147,
-                            He, t)*U238_s)**2+
-        (_Th232_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Th232_s)**2+
-        (_Sm147_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Sm147_s)**2+
-        (_Ft238_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft238_s)**2+
-        (_Ft235_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft147_s)**2+
-        (_Ft232_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft232_s)**2+
-        (_Ft147_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft147_s)**2
+        (dHe * He_s)**2+
+        (dU238_no235 * U238_s)**2+
+        (dTh232 * Th232_s)**2+
+        (dSm147 * Sm147_s)**2+
+        (dFt238 * Ft238_s)**2+
+        (dFt235 * Ft147_s)**2+
+        (dFt232 * Ft232_s)**2+
+        (dFt147 * Ft147_s)**2+
+        2*(dU238_no235 * dTh232 * U238_Th232_v)+
+        2*(dU238_no235 * dSm147 * U238_Sm147_v)+
+        2*(dTh232 * dSm147 * Th232_Sm147_v)+
+        2*(dFt238 * dFt235 * Ft238_Ft235_v)+
+        2*(dFt238 * dFt232 * Ft238_Ft232_v)+
+        2*(dFt238 * dFt147 * Ft238_Ft147_v)+
+        2*(dFt235 * dFt232 * Ft235_Ft232_v)+
+        2*(dFt235 * dFt147 * Ft235_Ft147_v)+
+        2*(dFt232 * dFt147 * Ft232_Ft147_v)
         )**(1/2)
 
 def date_uncertainty_with235(He, t, He_s=0,
                              U238=0, U235=0, Th232=0, Sm147=0,
                              Ft238=1, Ft235=1, Ft232=1, Ft147=1,
                              U238_s=0, U235_s=0, Th232_s=0, Sm147_s=0,
-                             Ft238_s=0, Ft235_s=0, Ft232_s=0, Ft147_s=0):
+                             Ft238_s=0, Ft235_s=0, Ft232_s=0, Ft147_s=0,
+                             U238_U235_v=0, U238_Th232_v=0, U238_Sm147_v=0,
+                             U235_Th232_v=0, U235_Sm147_v=0, Th232_Sm147_v=0,
+                             Ft238_Ft235_v=0, Ft238_Ft232_v=0, Ft238_Ft147_v=0,
+                             Ft235_Ft232_v=0, Ft235_Ft147_v=0, Ft232_Ft147_v=0):
     '''
     Returns symmetrical uncertainty for a given date with uncertainty
     in He, radionuclides, and/or all Ft values.
@@ -341,36 +393,94 @@ def date_uncertainty_with235(He, t, He_s=0,
     Ft147_s : float or array-like, optional
         The uncertainty in Ft147
         
+    U238_U235_v : float or array-like, optional
+        The covariance between U238 and U235
+    
+    U238_Th232_v : float or array-like, optional
+        The covariance between U238 and Th232
+    
+    U238_Sm147_v : float or array-like, optional
+        The covariance between U238 and Sm147
+    
+    U235_Th232_v : float or array-like, optional
+        The covariance between U235 and Th232
+    
+    U235_Sm147_v : float or array-like, optional
+        The covariance between U235 and Sm147
+    
+    Th232_Sm147_v : float or array-like, optional
+        The covariance between Th232 and Sm147
+    
+    Ft238_Ft235_v : float or array-like, optional
+        The covariance between Ft238 and Ft235
+    
+    Ft238_Ft232_v : float or array-like, optional
+        The covariance between Ft238 and Ft232
+    
+    Ft238_Ft147_v : float or array-like, optional
+        The covariance between Ft238 and Ft147
+    
+    Ft235_Ft232_v : float or array-like, optional
+        The covariance between Ft235 and Ft232
+    
+    Ft235_Ft147_v : float or array-like, optional
+        The covariance between Ft235 and Ft147
+    
+    Ft232_Ft147_v : float or array-like, optional
+        The covariance between Ft232 and Ft147
+        
     Returns
     -------
     float or array-like of uncertainty values
     '''
+    dHe = _He_prime(U238, U235, Th232, Sm147,
+                    Ft238, Ft235, Ft232, Ft147,
+                    He, t)
+    dU238_with235 = _U238_prime_withU235(U238, U235, Th232, Sm147,
+                                         Ft238, Ft235, Ft232, Ft147,
+                                         He, t)
+    dU235 = _U235_prime(U238, U235, Th232, Sm147,
+                        Ft238, Ft235, Ft232, Ft147,
+                        He, t)
+    dTh232 = _Th232_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dSm147 = _Sm147_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dFt238 = _Ft238_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dFt235 = _Ft235_prime(U238, U235, Th232, Sm147,
+                  Ft238, Ft235, Ft232, Ft147,
+                  He, t)
+    dFt232 = _Ft232_prime(U238, U235, Th232, Sm147,
+                          Ft238, Ft235, Ft232, Ft147,
+                          He, t)
+    dFt147 = _Ft147_prime(U238, U235, Th232, Sm147,
+                  Ft238, Ft235, Ft232, Ft147,
+                  He, t)
+    
     return (
-        (_He_prime(U238, U235, Th232, Sm147,
-                   Ft238, Ft235, Ft232, Ft147,
-                   He, t)*He_s)**2+
-        (_U238_prime_withU235(U238, U235, Th232, Sm147,
-                              Ft238, Ft235, Ft232, Ft147,
-                              He, t)*U238_s)**2+
-        (_U235_prime(U238, U235, Th232, Sm147,
-                     Ft238, Ft235, Ft232, Ft147,
-                     He, t)*U235_s)**2+
-        (_Th232_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Th232_s)**2+
-        (_Sm147_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Sm147_s)**2+
-        (_Ft238_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft238_s)**2+
-        (_Ft235_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft147_s)**2+
-        (_Ft232_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft232_s)**2+
-        (_Ft147_prime(U238, U235, Th232, Sm147,
-                      Ft238, Ft235, Ft232, Ft147,
-                      He, t)*Ft147_s)**2
+        (dHe * He_s)**2+
+        (dU238_with235 * U238_s)**2+
+        (dU235 * U235_s)**2+
+        (dTh232 * Th232_s)**2+
+        (dSm147 * Sm147_s)**2+
+        (dFt238 * Ft238_s)**2+
+        (dFt235 * Ft147_s)**2+
+        (dFt232 * Ft232_s)**2+
+        (dFt147 * Ft147_s)**2+
+        2*(dU238_with235 * dU235 * U238_U235_v)+
+        2*(dU238_with235 * dTh232 * U238_Th232_v)+
+        2*(dU238_with235 * dSm147 * U238_Sm147_v)+
+        2*(dU235 * dTh232 * U235_Th232_v)+
+        2*(dU235 * dSm147 * U235_Sm147_v)+
+        2*(dTh232 * dSm147 * Th232_Sm147_v)+
+        2*(dFt238 * dFt235 * Ft238_Ft235_v)+
+        2*(dFt238 * dFt232 * Ft238_Ft232_v)+
+        2*(dFt238 * dFt147 * Ft238_Ft147_v)+
+        2*(dFt235 * dFt232 * Ft235_Ft232_v)+
+        2*(dFt235 * dFt147 * Ft235_Ft147_v)+
+        2*(dFt232 * dFt147 * Ft232_Ft147_v)
         )**(1/2)

@@ -156,12 +156,30 @@ def _load_file(file, measured_U235, sheet):
         except AssertionError:
             return None
     
+    # build list of expected correlation coefficient columns
+    corrs = ['r 238U-235U',
+             'r 238U-232Th',
+             'r 238U-147Sm',
+             'r 235U-232Th',
+             'r 235U-147Sm',
+             'r 232Th-147Sm',
+             'r 238Ft-235Ft',
+             'r 238Ft-232Ft',
+             'r 238Ft-147Ft',
+             'r 235Ft-232Ft',
+             'r 235Ft-147Ft',
+             'r 232Ft-147Ft']
+    
     # create a list of the column headers and the name of following column
     # to get the uncertainty columns as well
     col_load = ['Sample']
     for c in cols:
         col_load.append(c)
         col_load.append(data_load.columns[data_load.columns.get_loc(c)+1])
+    # Add correlation coefficient columns
+    for co in corrs:
+        if co in data_load.columns:
+            col_load.append(co)
     
     # Create list of column header names to load
     final_cols = ['Sample']
@@ -172,9 +190,19 @@ def _load_file(file, measured_U235, sheet):
     # Restrict data only to relevant data and shorten the
     # column names for easier handling down the road
     data = data_load[col_load]
-    data.columns = final_cols
+    data.rename(columns={k:v for k, v in zip(col_load, final_cols)}, inplace = True)
     short_names = {name:name.replace('mol ','') for name in data.columns if 'mol ' in name}
     data = data.rename(columns=short_names)
+    
+    # Convert correlation coefficients to Covariance (if present)
+    cor_cols = [d for d in corrs if d in data]
+    missing_cors = [c.split(' ')[-1] for c in corrs if c not in cor_cols]
+    for c in cor_cols:
+        isos = c.split(' ')[-1].split('-')
+        data[c.split(' ')[-1]] = data[u'\u00B1 '+isos[0]]*data[u'\u00B1 '+isos[1]]*data[c]
+        data.drop(c, axis=1, inplace=True)
+    data[missing_cors] = 0
+    
     data.dropna(axis=0, how = 'all', inplace=True)
     
     return data
@@ -271,7 +299,10 @@ def _linear_propagation(nominal_t, data, measured_U235):
             data['4He'], nominal_t['raw date'], data[u'\u00B1 4He'],
             data['238U'], data['235U'], data['232Th'], data['147Sm'],
             U238_s=data[u'\u00B1 238U'], U235_s=data[u'\u00B1 235U'],
-            Th232_s=data[u'\u00B1 232Th'], Sm147_s=data[u'\u00B1 147Sm']
+            Th232_s=data[u'\u00B1 232Th'], Sm147_s=data[u'\u00B1 147Sm'],
+            U238_U235_v=data['238U-235U'], U238_Th232_v=data['238U-232Th'],
+            U238_Sm147_v=data['238U-147Sm'], U235_Th232_v=data['235U-232Th'],
+            U235_Sm147_v=data['235U-147Sm'], Th232_Sm147_v=data['232Th-147Sm']
             )
         linear_corr_uncertainty = date_uncertainty_with235(
             data['4He'], nominal_t['corrected date'], data[u'\u00B1 4He'],
@@ -280,14 +311,19 @@ def _linear_propagation(nominal_t, data, measured_U235):
             data[u'\u00B1 238U'], data[u'\u00B1 235U'],
             data[u'\u00B1 232Th'], data[u'\u00B1 147Sm'],
             data[u'\u00B1 238Ft'], data[u'\u00B1 235Ft'],
-            data[u'\u00B1 232Ft'], data[u'\u00B1 147Ft']
+            data[u'\u00B1 232Ft'], data[u'\u00B1 147Ft'],
+            data['238U-235U'], data['238U-232Th'], data['238U-147Sm'],
+            data['235U-232Th'], data['235U-147Sm'], data['232Th-147Sm'],
+            data['238Ft-235Ft'], data['238Ft-232Ft'], data['238Ft-147Ft'],
+            data['235Ft-232Ft'], data['235Ft-147Ft'], data['232Ft-147Ft']
             )
     else:
         linear_raw_uncertainty = date_uncertainty(
             data['4He'], nominal_t['raw date'], data[u'\u00B1 4He'],
             data['238U'], data['238U']/137.818, data['232Th'], data['147Sm'],
             U238_s=data[u'\u00B1 238U'], Th232_s=data[u'\u00B1 232Th'],
-            Sm147_s=data[u'\u00B1 147Sm']
+            Sm147_s=data[u'\u00B1 147Sm'], U238_Th232_v=data['238U-232Th'],
+            U238_Sm147_v=data['238U-147Sm'], Th232_Sm147_v=data['232Th-147Sm']
             )
         linear_corr_uncertainty = date_uncertainty(
             data['4He'], nominal_t['corrected date'], data[u'\u00B1 4He'],
@@ -295,7 +331,10 @@ def _linear_propagation(nominal_t, data, measured_U235):
             data['238Ft'], data['235Ft'], data['232Ft'], data['147Ft'],
             data[u'\u00B1 238U'], data[u'\u00B1 232Th'], data[u'\u00B1 147Sm'],
             data[u'\u00B1 238Ft'], data[u'\u00B1 235Ft'],
-            data[u'\u00B1 232Ft'], data[u'\u00B1 147Ft']
+            data[u'\u00B1 232Ft'], data[u'\u00B1 147Ft'],
+            data['238U-232Th'], data['238U-147Sm'], data['232Th-147Sm'],
+            data['238Ft-235Ft'], data['238Ft-232Ft'], data['238Ft-147Ft'],
+            data['235Ft-232Ft'], data['235Ft-147Ft'], data['232Ft-147Ft']
             )
     return {'raw unc': linear_raw_uncertainty, 'corr unc': linear_corr_uncertainty}
 
@@ -372,6 +411,10 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             sample_data[u'\u00B1 232Th'], sample_data[u'\u00B1 147Sm'],
             sample_data[u'\u00B1 238Ft'], sample_data[u'\u00B1 235Ft'],
             sample_data[u'\u00B1 232Ft'], sample_data[u'\u00B1 147Ft'],
+            sample_data['238U-235U'], sample_data['238U-232Th'], sample_data['238U-147Sm'],
+            sample_data['235U-232Th'], sample_data['235U-147Sm'], sample_data['232Th-147Sm'],
+            sample_data['238Ft-235Ft'], sample_data['238Ft-232Ft'], sample_data['238Ft-147Ft'],
+            sample_data['235Ft-232Ft'], sample_data['235Ft-147Ft'], sample_data['232Ft-147Ft'],
             histogram=histograms, parameterize=parameterize
             )
                 
