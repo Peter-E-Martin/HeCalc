@@ -157,18 +157,18 @@ def _load_file(file, measured_U235, sheet):
             return None
     
     # build list of expected correlation coefficient columns
-    corrs = ['r 238U-235U',
-             'r 238U-232Th',
-             'r 238U-147Sm',
-             'r 235U-232Th',
-             'r 235U-147Sm',
-             'r 232Th-147Sm',
-             'r 238Ft-235Ft',
-             'r 238Ft-232Ft',
-             'r 238Ft-147Ft',
-             'r 235Ft-232Ft',
-             'r 235Ft-147Ft',
-             'r 232Ft-147Ft']
+    corrs = [['r 238U-235U', 'r 235U-238U'],
+             ['r 238U-232Th', 'r 232Th-238U'],
+             ['r 238U-147Sm', 'r 147Sm-238U'],
+             ['r 235U-232Th', 'r 232Th-235U'],
+             ['r 235U-147Sm', 'r 147Sm-235U'],
+             ['r 232Th-147Sm', 'r 147Sm-232Th'],
+             ['r 238Ft-235Ft', 'r 235Ft-238Ft'],
+             ['r 238Ft-232Ft', 'r 232Ft-238Ft'],
+             ['r 238Ft-147Ft', 'r 147Ft-238Ft'],
+             ['r 235Ft-232Ft', 'r 232Ft-235Ft'],
+             ['r 235Ft-147Ft', 'r 147Ft-235Ft'],
+             ['r 232Ft-147Ft', 'r 147Ft-232Ft']]
     
     # create a list of the column headers and the name of following column
     # to get the uncertainty columns as well
@@ -177,9 +177,10 @@ def _load_file(file, measured_U235, sheet):
         col_load.append(c)
         col_load.append(data_load.columns[data_load.columns.get_loc(c)+1])
     # Add correlation coefficient columns
-    for co in corrs:
-        if co in data_load.columns:
-            col_load.append(co)
+    for n in corrs:
+        for co in n:
+            if co in data_load.columns:
+                col_load.append(co)
     
     # Create list of column header names to load
     final_cols = ['Sample']
@@ -194,16 +195,33 @@ def _load_file(file, measured_U235, sheet):
     short_names = {name:name.replace('mol ','') for name in data.columns if 'mol ' in name}
     data = data.rename(columns=short_names)
     
+    # Identify which correlation coefficients are present
+    cor_cols = []
+    missing_cors = []
+    for c in corrs:
+        for d in c:
+            found = False
+            if d in data:
+                cor_cols.append(d)
+                found = True
+            if not found:
+                missing_cors.append(c[0].split(' ')[-1])
+    
     # Convert correlation coefficients to Covariance (if present)
-    cor_cols = [d for d in corrs if d in data]
-    missing_cors = [c.split(' ')[-1] for c in corrs if c not in cor_cols]
+    order_pref = ['238U', '235U','232Th','147Sm', '238Ft', '235Ft', '232Ft', '147Ft']
     for c in cor_cols:
+        # Put isotopes and Fts in consistent order
         isos = c.split(' ')[-1].split('-')
-        data[c.split(' ')[-1]] = data[u'\u00B1 '+isos[0]]*data[u'\u00B1 '+isos[1]]*data[c]
+        if order_pref.index(isos[0]) > order_pref.index(isos[1]):
+            isos = isos[::-1]
+        # Convert correlation coefficients to Covariance
+        data[isos[0]+'-'+isos[1]] = data[u'\u00B1 '+isos[0]]*data[u'\u00B1 '+isos[1]]*data[c]
         data.drop(c, axis=1, inplace=True)
+    # Add missing covariance values to dataframe, default to 0
     data[missing_cors] = 0
     
     data.dropna(axis=0, how = 'all', inplace=True)
+    print(data.columns)
     
     return data
 
