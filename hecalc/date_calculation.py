@@ -52,7 +52,8 @@ def iterated_date(He, t_guess,
     the He age equation is not well-behaved (e.g., a radionuclide value
     is negative). In this case, a NaN value is returned.
     
-    Note that at least one radionuclide value must be specified.
+    Note that at least one radionuclide value must be specified. If all
+    nuclides are set to 0, nan is returned
     
     Parameters
     ----------
@@ -98,6 +99,14 @@ def iterated_date(He, t_guess,
     # based on a constant ratio to U238
     if U235 is None:
         U235 = U238/137.818
+    # If no radionuclides were passed, return all nans
+    if np.all(U238 == 0) and np.all(U235 == 0) and np.all(Th232 == 0) and np.all(Sm147 == 0):
+        if type(t_guess) != np.ndarray:
+            return np.nan
+        else:
+            nan_return = np.empty(len(He))
+            nan_return.fill(np.nan)
+            return nan_return
     # First convert ints or floats to arrays of len(1) 
     # to accomodate array datatype
     single_date = False
@@ -176,6 +185,9 @@ def meesters_dunai(He,
     If non-physical values are passed to this function (e.g., negative
     production rates of He), a linearized estimate of date is returned
     instead using the equation t = He/TotalProduction.
+    
+    Note that at least one radionuclide value must be specified. If all
+    nuclides are set to 0, nan is returned
         
     Parameters
     ----------
@@ -220,6 +232,13 @@ def meesters_dunai(He,
     '''
     if U235 is None:
         U235 = U238/137.818
+    if np.all(U238 == 0) and np.all(U235 == 0) and np.all(Th232 == 0) and np.all(Sm147 == 0):
+        if type(He) != np.ndarray:
+            return np.nan
+        else:
+            nan_return = np.empty(len(He))
+            nan_return.fill(np.nan)
+            return nan_return
     # Calculate individual production values
     p238 = 8*l_U238*U238*Ft238
     p235 = 7*l_U235*U235*Ft235
@@ -290,6 +309,13 @@ def get_date(He,
     '''
     if U235 is None:
         U235 = U238/137.818
+    if np.all(U238 == 0) and np.all(U235 == 0) and np.all(Th232 == 0) and np.all(Sm147 == 0):
+        if type(He) != np.ndarray:
+            nan_return = np.nan
+        else:
+            nan_return = np.empty(len(He))
+            nan_return.fill(np.nan)
+        return {'raw date': nan_return, 'corrected date': nan_return}
     # Use M&D 2005 age as first guess for iterative age
     # start by calculating raw age using 1 for all Ft
     t_app_raw = meesters_dunai(He, U238, U235, Th232, Sm147)

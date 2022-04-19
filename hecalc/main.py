@@ -468,7 +468,7 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         for ft in ['raw', 'corrected']:
             if ft == 'corrected':
                 save_out['Number of Monte Carlo simulations'].append('NaN')
-            save_out['MC Average CI '+ft].append('NaN')
+            save_out['MC average CI '+ft].append('NaN')
             save_out['MC +68% CI '+ft].append('NaN')
             save_out['MC -68% CI '+ft].append('NaN')
             if histograms:
