@@ -101,7 +101,7 @@ class GUI_App(Ui_MainWindow, QObject):
         # f = open('HTMLhelpmsg.txt', "r")
         # msg = f.read()
         # f.close()
-        helpBut.setText('Improve help coming soon.\nFor now, please see the readme.')
+        helpBut.setText('Improved help coming soon.\nFor now, please see the readme.')
         helpBut.setStandardButtons(QtWidgets.QMessageBox.Ok)
         helpBut.exec_()
     
@@ -111,7 +111,7 @@ class GUI_App(Ui_MainWindow, QObject):
         aboutBut.setWindowTitle("About HeCalc")
         aboutBut.setText(
             '''<html><head/><body><p align=\"center\" style=\"font-size:14px\">
-            v0.0.1 | Nov. 11 2021<br/>Contact: Peter E. Martin
+            v0.3.2 | Nov. 11 2021<br/>Contact: Peter E. Martin
             (peter.martin-2@colorado.edu)<br/>Written in Python 3.8 using
             PyQt5</p></body></html>'''
             )
@@ -493,7 +493,7 @@ class WorkerClass(QObject):
                         save_out['Sample'].append(data['Sample'].iloc[i])
                         
                         # Get the relevant data for each sample and do the main HeCalc calculations
-                        sample_data = data.loc[[i]].to_dict(orient='record')[0]
+                        sample_data = data.loc[[i]].to_dict('records')[0]
                         save_out = _sample_loop(save_out,
                                                 sample_data,
                                                 self.measured_U235,

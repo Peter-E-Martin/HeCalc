@@ -67,26 +67,26 @@ def _get_cols(linear, monteCarlo, parameterize):
     '''Helper function to create the names of the data to output'''
     save_columns = ['Sample',
                     'Raw date',
-                    'Mean raw date',
                     'Linear raw uncertainty',
-                    ' +68% CI raw',
-                    ' -68% CI raw',
+                    'MC average CI raw',
+                    'MC +68% CI raw',
+                    'MC -68% CI raw',
                     'Corrected date',
-                    'Mean corrected date',
                     'Linear corrected uncertainty',
-                    ' +68% CI corrected',
-                    ' -68% CI corrected',
+                    'MC average CI corrected',
+                    'MC +68% CI corrected',
+                    'MC -68% CI corrected',
                     'Number of Monte Carlo simulations']
     if monteCarlo and not linear:
         save_columns = ['Sample',
                         'Raw date',
-                        'Mean raw date',
-                        ' +68% CI raw',
-                        ' -68% CI raw',
+                        'MC average CI raw',
+                        'MC +68% CI raw',
+                        'MC -68% CI raw',
                         'Corrected date',
-                        'Mean corrected date',
-                        ' +68% CI corrected',
-                        ' -68% CI corrected',
+                        'MC average CI corrected',
+                        'MC +68% CI corrected',
+                        'MC -68% CI corrected',
                         'Number of Monte Carlo simulations']
     elif linear and not monteCarlo:
         save_columns = ['Sample',
@@ -101,12 +101,9 @@ def _get_cols(linear, monteCarlo, parameterize):
     # If parameterization is chosen, add the relevant columns
     # at the end of the raw and corrected data output
     if parameterize:
-        ins_idx = save_columns.index(' -68% CI raw')
-        add_cols = ['raw fit a','raw fit u','raw fit s']
-        save_columns = save_columns[:ins_idx+1]+add_cols+save_columns[ins_idx+1:]
-        ins_idx = save_columns.index(' -68% CI corrected')
-        add_cols = ['corrected fit a','corrected fit u','corrected fit s']
-        save_columns = save_columns[:ins_idx+1]+add_cols+save_columns[ins_idx+1:]
+        add_cols = ['Hist raw fit a','Hist raw fit u','Hist raw fit s',
+                    'Hist corrected fit a','Hist corrected fit u','Hist corrected fit s']
+        save_columns = save_columns+add_cols
     return save_columns
 
 def _load_file(file, measured_U235, sheet):
@@ -221,7 +218,6 @@ def _load_file(file, measured_U235, sheet):
     data[missing_cors] = 0
     
     data.dropna(axis=0, how = 'all', inplace=True)
-    print(data.columns)
     
     return data
 
@@ -263,7 +259,10 @@ def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs
     # Create a list to format for Excel
     colHead_row = "2:2"
     save_final = []
-    for s in save_out:
+    # Use the ordering of keys obtained in _get_cols to dictate the order of columns in the output
+    # since save_out is a dictionary this is both safer in terms of ordering and allowed columns
+    # to be more easily reordered in the future
+    for s in save_columns:
         save_final.append(save_out[s])
     save_final = list(zip(*save_final))
     save_final.insert(0, save_columns)
@@ -296,8 +295,12 @@ def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs
             output.column_dimensions[utils.get_column_letter(cell.column)].width = 10
         if 'simulations' in cell.value:
             output.column_dimensions[utils.get_column_letter(cell.column)].width = 17
-        if 'Mean corrected' in cell.value:
-            output.column_dimensions[utils.get_column_letter(cell.column)].width = 14
+        if 'average CI' in cell.value:
+            output.column_dimensions[utils.get_column_letter(cell.column)].width = 12
+        if '% CI corrected' in cell.value:
+            output.column_dimensions[utils.get_column_letter(cell.column)].width = 11
+        if 'Hist corrected' in cell.value:
+            output.column_dimensions[utils.get_column_letter(cell.column)].width = 13
     output.row_dimensions[3].height = 31
     
     try:
@@ -441,36 +444,39 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             if 1-mc_results[ft+' date']['cycles']/mc_number < precision:
                 if ft == 'corrected':
                     save_out['Number of Monte Carlo simulations'].append(mc_number)
-                save_out['Mean '+ft+' date'].append(round(mc_results[ft+' date']['mean']/1e6,decimals))
-                save_out[' +68% CI '+ft].append(round(mc_results[ft+' date']['+68% CI']/1e6,decimals))
-                save_out[' -68% CI '+ft].append(round(mc_results[ft+' date']['-68% CI']/1e6,decimals))
+                CI_high = (mc_results[ft+' date']['+68% CI']-nominal_t[ft+' date'])
+                CI_low = (nominal_t[ft+' date']-mc_results[ft+' date']['-68% CI'])
+                mean_CI = np.average([CI_high, CI_low])
+                save_out['MC average CI '+ft].append(round(mean_CI/1e6,decimals))
+                save_out['MC +68% CI '+ft].append(round(CI_high/1e6,decimals))
+                save_out['MC -68% CI '+ft].append(round(CI_low/1e6,decimals))
                 if histograms:
                     mc_results[ft+' date']['histogram'][0] = np.around(mc_results[ft+' date']['histogram'][0]/1e6,decimals)
                     mc_results[ft+' date']['histogram'][1] = mc_results[ft+' date']['histogram'][1]
                     save_out[ft+' histogram'].append(mc_results[ft+' date']['histogram'])
                     if parameterize:
-                        save_out[ft+' fit a'].append(mc_results[ft+' date']['a'])
+                        save_out['Hist '+ft+' fit a'].append(mc_results[ft+' date']['a'])
                         try:
-                            save_out[ft+' fit u'].append(round(mc_results[ft+' date']['u']/1e6,decimals))
-                            save_out[ft+' fit s'].append(round(mc_results[ft+' date']['s']/1e6,decimals))
+                            save_out['Hist '+ft+' fit u'].append(round(mc_results[ft+' date']['u']/1e6,decimals))
+                            save_out['Hist '+ft+' fit s'].append(round(mc_results[ft+' date']['s']/1e6,decimals))
                         except:
-                            save_out[ft+' fit u'].append(mc_results[ft+' date']['u'])
-                            save_out[ft+' fit s'].append(mc_results[ft+' date']['s'])
+                            save_out['Hist '+ft+' fit u'].append(mc_results[ft+' date']['u'])
+                            save_out['Hist '+ft+' fit s'].append(mc_results[ft+' date']['s'])
             else:
                 reject = True
     if reject:
         for ft in ['raw', 'corrected']:
             if ft == 'corrected':
                 save_out['Number of Monte Carlo simulations'].append('NaN')
-            save_out['Mean '+ft+' date'].append('NaN')
-            save_out[' +68% CI '+ft].append('NaN')
-            save_out[' -68% CI '+ft].append('NaN')
+            save_out['MC Average CI '+ft].append('NaN')
+            save_out['MC +68% CI '+ft].append('NaN')
+            save_out['MC -68% CI '+ft].append('NaN')
             if histograms:
                 save_out[ft+' histogram'].append([np.array(['NaN']),np.array(['NaN'])])
                 if parameterize:
-                    save_out[ft+' fit a'].append('NaN')
-                    save_out[ft+' fit u'].append('NaN')
-                    save_out[ft+' fit s'].append('NaN')
+                    save_out['Hist '+ft+' fit a'].append('NaN')
+                    save_out['Hist '+ft+' fit u'].append('NaN')
+                    save_out['Hist '+ft+' fit s'].append('NaN')
     return save_out
 
 def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, measured_U235=False,
