@@ -11,7 +11,7 @@ HeCalc is available through the python package index (PyPI), so you can install 
 
 ### User Interface installation
 
-HeCalc is also available as an executable which will run a self-contained Windows application (Mac version coming soon!) that does not require the use of Python. The executable is available with each HeCalc release, which can be found on the right-hand side of the GitHub repository page by clicking "Releases". Alternatively, the most recent download is available by [clicking here](https://github.com/Peter-E-Martin/HeCalc/releases/download/v0.2.1-alpha/HeCalc.exe).
+HeCalc is also available as an executable which will run a self-contained Windows application (Mac version coming soon!) that does not require the use of Python. The executable is available with each HeCalc release, which can be found on the right-hand side of the GitHub repository page by clicking "Releases". Alternatively, the most recent download is available by [clicking here](https://github.com/Peter-E-Martin/HeCalc/releases/download/v0.3.1-alpha/HeCalc.exe).
 
 If you instead wish to run the user interface through python, optional dependencies are available through the command ```pip install hecalc[gui]```. This optional installation mode allows hecalc to be run in the command line as described below. ***Warning***: ```pip install hecalc[gui]``` is incompadible with Anaconda. Anaconda's native PyQt version allows the HeCalc to be run, so if you wish to use HeCalc in an Anaconda environment ```pip install hecalc``` is the safest option.
 
@@ -74,7 +74,7 @@ If histogram generation was chosen with Monte Carlo uncertainty propagation, the
 
 ## hecalc functions
 
-If HeCalc is installed in site-packages (i.e., is downloaded as a Python package), several functions are available out of the box using the package name hecalc:
+If HeCalc is installed in site-packages (i.e., is downloaded as a Python package), several functions are available out of the box using the package name hecalc. These functions are listed here with their basic use cases; arguments and returned values can be viewed using the help() function for each.
 
 |Function|Use|
 |--|--|
