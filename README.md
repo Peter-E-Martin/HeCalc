@@ -74,7 +74,7 @@ If histogram generation was chosen with Monte Carlo uncertainty propagation, the
 
 ## hecalc functions
 
-If HeCalc is installed in site-packages (i.e., is downloaded as a Python package), several functions are available out of the box using the package name hecalc:
+If HeCalc is installed in site-packages (i.e., is downloaded as a Python package), several functions are available out of the box using the package name hecalc. These functions are listed here with their basic use cases; arguments and returned values can be viewed using the help() function for each.
 
 |Function|Use|
 |--|--|
