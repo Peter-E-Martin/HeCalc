@@ -68,25 +68,25 @@ def _get_cols(linear, monteCarlo, parameterize):
     save_columns = ['Sample',
                     'Raw date',
                     'Linear raw uncertainty',
-                    'MC average CI raw',
-                    'MC +68% CI raw',
-                    'MC -68% CI raw',
+                    'MC average CI, raw',
+                    'MC +68% CI, raw',
+                    'MC -68% CI, raw',
                     'Corrected date',
                     'Linear corrected uncertainty',
-                    'MC average CI corrected',
-                    'MC +68% CI corrected',
-                    'MC -68% CI corrected',
+                    'MC average CI, corrected',
+                    'MC +68% CI, corrected',
+                    'MC -68% CI, corrected',
                     'Number of Monte Carlo simulations']
     if monteCarlo and not linear:
         save_columns = ['Sample',
                         'Raw date',
-                        'MC average CI raw',
-                        'MC +68% CI raw',
-                        'MC -68% CI raw',
+                        'MC average CI, raw',
+                        'MC +68% CI, raw',
+                        'MC -68% CI, raw',
                         'Corrected date',
-                        'MC average CI corrected',
-                        'MC +68% CI corrected',
-                        'MC -68% CI corrected',
+                        'MC average, corrected',
+                        'MC +68% CI, corrected',
+                        'MC -68% CI, corrected',
                         'Number of Monte Carlo simulations']
     elif linear and not monteCarlo:
         save_columns = ['Sample',
@@ -297,8 +297,8 @@ def _make_excel(save_out, save_columns, file, monteCarlo, precision_user, saveAs
             output.column_dimensions[utils.get_column_letter(cell.column)].width = 17
         if 'average CI' in cell.value:
             output.column_dimensions[utils.get_column_letter(cell.column)].width = 12
-        if '% CI corrected' in cell.value:
-            output.column_dimensions[utils.get_column_letter(cell.column)].width = 11
+        if '% CI, corrected' in cell.value:
+            output.column_dimensions[utils.get_column_letter(cell.column)].width = 12
         if 'Hist corrected' in cell.value:
             output.column_dimensions[utils.get_column_letter(cell.column)].width = 13
     output.row_dimensions[3].height = 31
@@ -447,9 +447,9 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                 CI_high = (mc_results[ft+' date']['+68% CI']-nominal_t[ft+' date'])
                 CI_low = (nominal_t[ft+' date']-mc_results[ft+' date']['-68% CI'])
                 mean_CI = np.average([CI_high, CI_low])
-                save_out['MC average CI '+ft].append(round(mean_CI/1e6,decimals))
-                save_out['MC +68% CI '+ft].append(round(CI_high/1e6,decimals))
-                save_out['MC -68% CI '+ft].append(round(CI_low/1e6,decimals))
+                save_out['MC average CI, '+ft].append(round(mean_CI/1e6,decimals))
+                save_out['MC +68% CI, '+ft].append(round(CI_high/1e6,decimals))
+                save_out['MC -68% CI, '+ft].append(round(CI_low/1e6,decimals))
                 if histograms:
                     mc_results[ft+' date']['histogram'][0] = np.around(mc_results[ft+' date']['histogram'][0]/1e6,decimals)
                     mc_results[ft+' date']['histogram'][1] = mc_results[ft+' date']['histogram'][1]
@@ -468,18 +468,18 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         for ft in ['raw', 'corrected']:
             if ft == 'corrected':
                 save_out['Number of Monte Carlo simulations'].append('NaN')
-            save_out['MC average CI '+ft].append('NaN')
-            save_out['MC +68% CI '+ft].append('NaN')
-            save_out['MC -68% CI '+ft].append('NaN')
+            save_out['MC average CI, '+ft].append('NaN')
+            save_out['MC +68% CI, '+ft].append('NaN')
+            save_out['MC -68% CI, '+ft].append('NaN')
             if histograms:
                 save_out[ft+' histogram'].append([np.array(['NaN']),np.array(['NaN'])])
                 if parameterize:
-                    save_out['Hist '+ft+' fit a'].append('NaN')
-                    save_out['Hist '+ft+' fit u'].append('NaN')
-                    save_out['Hist '+ft+' fit s'].append('NaN')
+                    save_out['Hist, '+ft+' fit a'].append('NaN')
+                    save_out['Hist, '+ft+' fit u'].append('NaN')
+                    save_out['Hist, '+ft+' fit s'].append('NaN')
     return save_out
 
-def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=5, measured_U235=False,
+def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=2, measured_U235=False,
                 monteCarlo=True, linear=True, histograms=False, parameterize=False):
     '''
     Read in a file with He, radionuclide, and Ft data and their uncertainties

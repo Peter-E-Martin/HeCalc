@@ -489,7 +489,7 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         self.decBox.setFont(font)
         self.decBox.setMaximum(10)
-        self.decBox.setProperty("value", 5)
+        self.decBox.setProperty("value", 2)
         self.decBox.setObjectName("decBox")
         self.horizontalLayout_2.addWidget(self.decBox)
         spacerItem18 = QtWidgets.QSpacerItem(17, 30, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
