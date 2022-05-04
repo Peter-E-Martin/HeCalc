@@ -455,7 +455,7 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                     mc_results[ft+' date']['histogram'][1] = mc_results[ft+' date']['histogram'][1]
                     save_out[ft+' histogram'].append(mc_results[ft+' date']['histogram'])
                     if parameterize:
-                        save_out['Hist '+ft+' fit a'].append(mc_results[ft+' date']['a'])
+                        save_out['Hist '+ft+' fit a'].append(round(mc_results[ft+' date']['a'], decimals))
                         try:
                             save_out['Hist '+ft+' fit u'].append(round(mc_results[ft+' date']['u']/1e6,decimals))
                             save_out['Hist '+ft+' fit s'].append(round(mc_results[ft+' date']['s']/1e6,decimals))
