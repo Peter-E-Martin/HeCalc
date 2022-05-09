@@ -616,8 +616,6 @@ class WorkerClass(QObject):
                                             self.decimals,
                                             self.prec)
                 
-                print(output_lists)
-                
                 # Convert HeCalc output to something reasonable to print
                 output = {}
                 for d in output_lists:
