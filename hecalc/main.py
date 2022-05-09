@@ -196,13 +196,13 @@ def _load_file(file, measured_U235, sheet):
     cor_cols = []
     missing_cors = []
     for c in corrs:
+        found = False
         for d in c:
-            found = False
             if d in data:
                 cor_cols.append(d)
                 found = True
-            if not found:
-                missing_cors.append(c[0].split(' ')[-1])
+        if not found:
+            missing_cors.append(c[0].split(' ')[-1])
     
     # Convert correlation coefficients to Covariance (if present)
     order_pref = ['238U', '235U','232Th','147Sm', '238Ft', '235Ft', '232Ft', '147Ft']
@@ -613,7 +613,7 @@ def hecalc_main(file=None, saveAs=None, percent_precision=0.01, decimals=2, meas
         
         save_out = _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
                                 histograms, parameterize, decimals, precision)
-
+    
     # Create the excel workbook using the input parameters
     book = _make_excel(save_out, save_columns, file, monteCarlo, percent_precision, saveAs)
     
