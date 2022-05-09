@@ -582,7 +582,28 @@ class WorkerClass(QObject):
                         '232Ft': self.manual_data[14],
                         u'\u00B1 '+'232Ft': self.manual_data[15],
                         '147Ft': self.manual_data[16],
-                        u'\u00B1 '+'147Ft': self.manual_data[17]}
+                        u'\u00B1 '+'147Ft': self.manual_data[17]
+                        }
+                
+                Ft_uncertainties = [data[u'\u00B1 '+'238Ft'], data[u'\u00B1 '+'235Ft'],
+                                    data[u'\u00B1 '+'232Ft'], data[u'\u00B1 '+'147Ft']]
+                
+                correlations = {
+                        '238U-235U': 0,
+                        '238U-232Th': 0,
+                        '238U-147Sm': 0,
+                        '235U-232Th': 0,
+                        '235U-147Sm': 0,
+                        '232Th-147Sm': 0,
+                        '238Ft-235Ft': data[u'\u00B1 '+'238Ft']*data[u'\u00B1 '+'235Ft'],
+                        '238Ft-232Ft': data[u'\u00B1 '+'238Ft']*data[u'\u00B1 '+'232Ft'],
+                        '238Ft-147Ft': data[u'\u00B1 '+'238Ft']*data[u'\u00B1 '+'147Ft'],
+                        '235Ft-232Ft': data[u'\u00B1 '+'235Ft']*data[u'\u00B1 '+'232Ft'],
+                        '235Ft-147Ft': data[u'\u00B1 '+'235Ft']*data[u'\u00B1 '+'147Ft'],
+                        '232Ft-147Ft': data[u'\u00B1 '+'232Ft']*data[u'\u00B1 '+'147Ft'],
+                        }
+                                
+                data.update(correlations)
                 
                 # Perform main HeCalc function with the entered data
                 output_lists = _sample_loop(save_out,
@@ -595,21 +616,23 @@ class WorkerClass(QObject):
                                             self.decimals,
                                             self.prec)
                 
+                print(output_lists)
+                
                 # Convert HeCalc output to something reasonable to print
                 output = {}
                 for d in output_lists:
                     if len(output_lists[d])>0:
                         output[d] = output_lists[d][0]
-                key_change = ['Raw date', 'Raw\ndate',
-                              'Mean raw date', 'Mean\nraw\ndate',
+                key_change = ['Raw date', 'Raw\ndate (Ma)',
                               'Linear raw uncertainty', 'Linear\nraw\n'+u'\u00B1',
-                              ' +68% CI raw', '+68%\nCI\nraw',
-                              ' -68% CI raw', '-68%\nCI\nraw',
-                              'Corrected date', 'Corr.\ndate',
-                              'Mean corrected date', 'Mean\ncorrected\ndate',
+                              'MC average CI, raw', 'Avg\nraw\nCI',
+                              'MC +68% CI, raw', '+68%\nCI\nraw',
+                              'MC -68% CI, raw', '-68%\nCI\nraw',
+                              'Corrected date', 'Corr.\ndate (Ma)',
                               'Linear corrected uncertainty', 'Linear\ncorr.\n'+u'\u00B1',
-                              ' +68% CI corrected', '+68%\nCI\ncorr.',
-                              ' -68% CI corrected', '-68%\nCI\ncorr.']
+                              'MC average CI, corrected', 'Avg\ncorr.\nCI',
+                              'MC +68% CI, corrected', '+68%\nCI\ncorr.',
+                              'MC -68% CI, corrected', '-68%\nCI\ncorr.']
                 for i in range(0,len(key_change),2):
                     if key_change[i] in output.keys():
                         output[key_change[i+1]] = output.pop(key_change[i])
