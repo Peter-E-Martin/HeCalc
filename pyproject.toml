@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hecalc"
-version = "0.3.3"
+version = "0.3.4"
 description = "A tool for performing (U-Th)/He data reduction and uncertainty propagation"
 authors = ["Peter E. Martin <peter.martin-2@colorado.edu>"]
 

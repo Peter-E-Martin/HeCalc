@@ -111,7 +111,7 @@ class GUI_App(Ui_MainWindow, QObject):
         aboutBut.setWindowTitle("About HeCalc")
         aboutBut.setText(
             '''<html><head/><body><p align=\"center\" style=\"font-size:14px\">
-            v0.3.3 | May 4 2022<br/>Contact: Peter E. Martin
+            v0.3.4 | June 14 2022<br/>Contact: Peter E. Martin
             (peter.martin-2@colorado.edu)<br/>Written in Python 3.8 using
             PyQt5</p></body></html>'''
             )
