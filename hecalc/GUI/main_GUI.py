@@ -111,7 +111,7 @@ class GUI_App(Ui_MainWindow, QObject):
         aboutBut.setWindowTitle("About HeCalc")
         aboutBut.setText(
             '''<html><head/><body><p align=\"center\" style=\"font-size:14px\">
-            v0.3.4 | June 14 2022<br/>Contact: Peter E. Martin
+            v0.4.0 | June 28 2022<br/>Contact: Peter E. Martin
             (peter.martin-2@colorado.edu)<br/>Written in Python 3.8 using
             PyQt5</p></body></html>'''
             )
@@ -622,15 +622,23 @@ class WorkerClass(QObject):
                     if len(output_lists[d])>0:
                         output[d] = output_lists[d][0]
                 key_change = ['Raw date', 'Raw\ndate (Ma)',
-                              'Linear raw uncertainty', 'Linear\nraw\n'+u'\u00B1',
-                              'MC average CI, raw', 'Avg\nraw\nCI',
+                              'Linear raw 1σ uncertainty', 'Linear\nraw 1σ\n'+u'\u00B1',
+                              'MC average 68% CI, raw', 'Avg\nraw\n68% CI',
                               'MC +68% CI, raw', '+68%\nCI\nraw',
                               'MC -68% CI, raw', '-68%\nCI\nraw',
+                              'Linear raw 2σ uncertainty', 'Linear\nraw 2σ\n'+u'\u00B1',
+                              'MC average 95% CI, raw', 'Avg\nraw\n95% CI',
+                              'MC +95% CI, raw', '+95%\nCI\nraw',
+                              'MC -95% CI, raw', '-95%\nCI\nraw',
                               'Corrected date', 'Corr.\ndate (Ma)',
-                              'Linear corrected uncertainty', 'Linear\ncorr.\n'+u'\u00B1',
-                              'MC average CI, corrected', 'Avg\ncorr.\nCI',
+                              'Linear corrected 1σ uncertainty', 'Linear\ncorr. 1σ\n'+u'\u00B1',
+                              'MC average 68% CI, corrected', 'Avg\ncorr.\n68% CI',
                               'MC +68% CI, corrected', '+68%\nCI\ncorr.',
-                              'MC -68% CI, corrected', '-68%\nCI\ncorr.']
+                              'MC -68% CI, corrected', '-68%\nCI\ncorr.',
+                              'Linear corrected 2σ uncertainty', 'Linear\ncorr. 2σ\n'+u'\u00B1',
+                              'MC average 95% CI, corrected', 'Avg\ncorr.\n95% CI',
+                              'MC +95% CI, corrected', '+95%\nCI\ncorr.',
+                              'MC -95% CI, corrected', '-95%\nCI\ncorr.']
                 for i in range(0,len(key_change),2):
                     if key_change[i] in output.keys():
                         output[key_change[i+1]] = output.pop(key_change[i])
@@ -641,13 +649,33 @@ class WorkerClass(QObject):
                 # Print the data in the status field. This uses the very handy
                 # tabulate python package to convert to nice tables
                 self.status.emit('\n')
-                raws = [[k, v] for k, v in list(output.items()) if any(r in k for r in ['raw', 'Raw'])]
-                rotate_raws = list(zip(*raws))
-                self.status.emit(tabulate(rotate_raws))
+                dates = [[k, v] for k, v in list(output.items()) if 'date' in k]
+                rotate_dates = list(zip(*dates))
+                self.status.emit(tabulate(rotate_dates))
                 self.status.emit('\n')
-                corrs = [[k, v] for k, v in list(output.items()) if any(r in k for r in ['corr', 'Corr'])]
-                rotate_corrs = list(zip(*corrs))
-                self.status.emit(tabulate(rotate_corrs))
+                raws_68 = [[k, v] for k, v in list(output.items()) if
+                           any(r in k for r in ['raw', 'Raw']) and
+                           any(r in k for r in ['1σ', '68%'])]
+                rotate_raws_68 = list(zip(*raws_68))
+                self.status.emit(tabulate(rotate_raws_68))
+                self.status.emit('\n')
+                raws_95 = [[k, v] for k, v in list(output.items()) if
+                           any(r in k for r in ['raw', 'Raw']) and
+                           any(r in k for r in ['2σ', '95%'])]
+                rotate_raws_95 = list(zip(*raws_95))
+                self.status.emit(tabulate(rotate_raws_95))
+                self.status.emit('\n')
+                corrs_68 = [[k, v] for k, v in list(output.items()) if
+                           any(r in k for r in ['corr', 'Corr']) and
+                           any(r in k for r in ['1σ', '68%'])]
+                corrs_raws_68 = list(zip(*corrs_68))
+                self.status.emit(tabulate(corrs_raws_68))
+                self.status.emit('\n')
+                corrs_95 = [[k, v] for k, v in list(output.items()) if
+                           any(r in k for r in ['corr', 'Corr']) and
+                           any(r in k for r in ['2σ', '95%'])]
+                corrs_raws_95 = list(zip(*corrs_95))
+                self.status.emit(tabulate(corrs_raws_95))
                 self.status.emit('\n')
                 self.finished.emit()
             # If any error occurs, reset the program
