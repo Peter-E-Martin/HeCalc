@@ -579,7 +579,7 @@ class Ui_MainWindow(object):
         self.groupBox.setTitle(_translate("MainWindow", "Modeling Type"))
         self.monteCarloCheckBox.setText(_translate("MainWindow", "Monte Carlo"))
         self.linearCheckBox.setText(_translate("MainWindow", "Linear Error Propagation"))
-        self.label_2.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">Enter desired precision<br/>of Monte Carlo mean in %</p></body></html>"))
+        self.label_2.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">Enter desired precision<br/>of Monte Carlo uncertainty in %</p></body></html>"))
         self.decLabel.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">Enter number of decimals to report</p></body></html>"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))

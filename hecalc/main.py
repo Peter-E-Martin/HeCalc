@@ -406,10 +406,11 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
     
     if monteCarlo and not reject:
         # Estimate the number of cycles needed to reach the requested precision
-        # TODO implement some kind of safeguard against huge mc_number results for very uncertain data
         s_est = linear_uncertainty['corr unc']
         mean_est = nominal_t['corrected date']
-        mc_number = s_est**2/(precision*mean_est)**2
+        mc_sd = precision*mean_est
+        # mc_number = s_est**2/(precision*mean_est)**2
+        mc_number = (2*mc_sd**2+s_est**2)/(2*mc_sd**2)
         if mc_number < 5:
             mc_number = 5
         else:

@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     # Prompt user to decide on details of modeling
     elif GUI_or_CLI == '1':
-        percent_precision = float(input('Enter desired % precision of Monte Carlo mean: ')) # user-defined relative precision, in percent
+        percent_precision = float(input('Enter desired % precision of Monte Carlo uncertainty: ')) # user-defined relative precision, in percent
         decimals =  int(input('Enter number of decimals to output: ')) # number of decimals to report
         measured_U235 = input('Was 235U measured directly? [Y/N]')
         if measured_U235 == 'Y' or measured_U235 == 'y':
