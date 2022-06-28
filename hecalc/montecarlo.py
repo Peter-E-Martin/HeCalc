@@ -253,10 +253,13 @@ def monte_carlo(mc_number, He, He_s=0,
     # Produce statistics and save
     for t in ['raw date', 'corrected date']:
         mean = np.mean(MonteCarlo_t[t])
-        CIs = np.percentile(MonteCarlo_t[t], [15.865, 84.135])
+        CIs_68 = np.percentile(MonteCarlo_t[t], [15.865, 84.135])
+        CIs_95 = np.percentile(MonteCarlo_t[t], [15.865, 84.135])
         mc_results[t]['mean'] = mean
-        mc_results[t]['+68% CI'] = CIs[1]
-        mc_results[t]['-68% CI'] = CIs[0]
+        mc_results[t]['+68% CI'] = CIs_68[1]
+        mc_results[t]['-68% CI'] = CIs_68[0]
+        mc_results[t]['+95% CI'] = CIs_95[1]
+        mc_results[t]['-95% CI'] = CIs_95[0]
         # Report how many of the Monte Carlo simulations converged to
         # an age. For highly uncertain input data, this may be significantly
         # lower than the number of requested cycles.

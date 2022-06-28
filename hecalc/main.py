@@ -67,33 +67,49 @@ def _get_cols(linear, monteCarlo, parameterize):
     '''Helper function to create the names of the data to output'''
     save_columns = ['Sample',
                     'Raw date',
-                    'Linear raw uncertainty',
-                    'MC average CI, raw',
+                    'Linear raw 1σ uncertainty',
+                    'MC average 68% CI, raw',
                     'MC +68% CI, raw',
                     'MC -68% CI, raw',
+                    'Linear raw 2σ uncertainty',
+                    'MC average 95% CI, raw',
+                    'MC +95% CI, raw',
+                    'MC -95% CI, raw',
                     'Corrected date',
-                    'Linear corrected uncertainty',
-                    'MC average CI, corrected',
+                    'Linear corrected 1σ uncertainty',
+                    'MC average 68% CI, corrected',
                     'MC +68% CI, corrected',
                     'MC -68% CI, corrected',
+                    'Linear corrected 2σ uncertainty',
+                    'MC average 95% CI, corrected',
+                    'MC +95% CI, corrected',
+                    'MC -95% CI, corrected',
                     'Number of Monte Carlo simulations']
     if monteCarlo and not linear:
         save_columns = ['Sample',
                         'Raw date',
-                        'MC average CI, raw',
+                        'MC average 68% CI, raw',
                         'MC +68% CI, raw',
                         'MC -68% CI, raw',
+                        'MC average 95% CI, raw',
+                        'MC +95% CI, raw',
+                        'MC -95% CI, raw',
                         'Corrected date',
-                        'MC average, corrected',
+                        'MC average 68% CI, corrected',
                         'MC +68% CI, corrected',
                         'MC -68% CI, corrected',
+                        'MC average 95% CI, corrected',
+                        'MC +95% CI, corrected',
+                        'MC -95% CI, corrected',
                         'Number of Monte Carlo simulations']
     elif linear and not monteCarlo:
         save_columns = ['Sample',
                         'Raw date',
-                        'Linear raw uncertainty',
+                        'Linear raw 1σ uncertainty',
+                        'Linear raw 2σ uncertainty',
                         'Corrected date',
-                        'Linear corrected uncertainty']
+                        'Linear corrected 1σ uncertainty',
+                        'Linear corrected 2σ uncertainty']
     elif not monteCarlo and not linear:
         save_columns = ['Sample',
                         'Raw date',
@@ -396,8 +412,10 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             reject = True
     
     if linear:
-        save_out['Linear raw uncertainty'].append(round(linear_uncertainty['raw unc']/1e6,decimals))
-        save_out['Linear corrected uncertainty'].append(round(linear_uncertainty['corr unc']/1e6,decimals))
+        save_out['Linear raw 1σ uncertainty'].append(round(linear_uncertainty['raw unc']/1e6,decimals))
+        save_out['Linear corrected 1σ uncertainty'].append(round(linear_uncertainty['corr unc']/1e6,decimals))
+        save_out['Linear raw 2σ uncertainty'].append(round((linear_uncertainty['raw unc']*2)/1e6,decimals))
+        save_out['Linear corrected 2σ uncertainty'].append(round((linear_uncertainty['corr unc']*2)/1e6,decimals))
     
     for k in sample_data:
         if u'\u00B1' in k:
@@ -445,12 +463,18 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
             if 1-mc_results[ft+' date']['cycles']/mc_number < precision:
                 if ft == 'corrected':
                     save_out['Number of Monte Carlo simulations'].append(mc_number)
-                CI_high = (mc_results[ft+' date']['+68% CI']-nominal_t[ft+' date'])
-                CI_low = (nominal_t[ft+' date']-mc_results[ft+' date']['-68% CI'])
-                mean_CI = np.average([CI_high, CI_low])
-                save_out['MC average CI, '+ft].append(round(mean_CI/1e6,decimals))
-                save_out['MC +68% CI, '+ft].append(round(CI_high/1e6,decimals))
-                save_out['MC -68% CI, '+ft].append(round(CI_low/1e6,decimals))
+                CI_68high = (mc_results[ft+' date']['+68% CI']-nominal_t[ft+' date'])
+                CI_68low = (nominal_t[ft+' date']-mc_results[ft+' date']['-68% CI'])
+                mean_68CI = np.average([CI_68high, CI_68low])
+                save_out['MC average 68% CI, '+ft].append(round(mean_68CI/1e6,decimals))
+                save_out['MC +68% CI, '+ft].append(round(CI_68high/1e6,decimals))
+                save_out['MC -68% CI, '+ft].append(round(CI_68low/1e6,decimals))
+                CI_95high = (mc_results[ft+' date']['+95% CI']-nominal_t[ft+' date'])
+                CI_95low = (nominal_t[ft+' date']-mc_results[ft+' date']['-95% CI'])
+                mean_95CI = np.average([CI_95high, CI_95low])
+                save_out['MC average 95% CI, '+ft].append(round(mean_95CI/1e6,decimals))
+                save_out['MC +95% CI, '+ft].append(round(CI_95high/1e6,decimals))
+                save_out['MC -95% CI, '+ft].append(round(CI_95low/1e6,decimals))
                 if histograms:
                     mc_results[ft+' date']['histogram'][0] = np.around(mc_results[ft+' date']['histogram'][0]/1e6,decimals)
                     mc_results[ft+' date']['histogram'][1] = mc_results[ft+' date']['histogram'][1]
@@ -469,9 +493,12 @@ def _sample_loop(save_out, sample_data, measured_U235, linear, monteCarlo,
         for ft in ['raw', 'corrected']:
             if ft == 'corrected':
                 save_out['Number of Monte Carlo simulations'].append('NaN')
-            save_out['MC average CI, '+ft].append('NaN')
+            save_out['MC average 68% CI, '+ft].append('NaN')
             save_out['MC +68% CI, '+ft].append('NaN')
             save_out['MC -68% CI, '+ft].append('NaN')
+            save_out['MC average 95% CI, '+ft].append('NaN')
+            save_out['MC +95% CI, '+ft].append('NaN')
+            save_out['MC -95% CI, '+ft].append('NaN')
             if histograms:
                 save_out[ft+' histogram'].append([np.array(['NaN']),np.array(['NaN'])])
                 if parameterize:
