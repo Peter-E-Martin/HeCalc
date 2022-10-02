@@ -254,7 +254,7 @@ def monte_carlo(mc_number, He, He_s=0,
     for t in ['raw date', 'corrected date']:
         mean = np.mean(MonteCarlo_t[t])
         CIs_68 = np.percentile(MonteCarlo_t[t], [15.865, 84.135])
-        CIs_95 = np.percentile(MonteCarlo_t[t], [15.865, 84.135])
+        CIs_95 = np.percentile(MonteCarlo_t[t], [2.275, 97.725])
         mc_results[t]['mean'] = mean
         mc_results[t]['+68% CI'] = CIs_68[1]
         mc_results[t]['-68% CI'] = CIs_68[0]
