@@ -101,7 +101,7 @@ class GUI_App(Ui_MainWindow, QObject):
         # f = open('HTMLhelpmsg.txt', "r")
         # msg = f.read()
         # f.close()
-        helpBut.setText('Improved help coming soon.\nFor now, please see the readme.')
+        helpBut.setText('Please see the readme.')
         helpBut.setStandardButtons(QtWidgets.QMessageBox.Ok)
         helpBut.exec_()
     
@@ -111,7 +111,7 @@ class GUI_App(Ui_MainWindow, QObject):
         aboutBut.setWindowTitle("About HeCalc")
         aboutBut.setText(
             '''<html><head/><body><p align=\"center\" style=\"font-size:14px\">
-            v0.4.1 | June 28 2022<br/>Contact: Peter E. Martin
+            v1.0.0 | November 12 2022<br/>Contact: Peter E. Martin
             (peter.martin-2@colorado.edu)<br/>Written in Python 3.8 using
             PyQt5</p></body></html>'''
             )
